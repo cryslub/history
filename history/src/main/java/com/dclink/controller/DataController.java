@@ -14,12 +14,15 @@ import com.dclink.mapper.MainMapper;
 import com.dclink.pojo.Candidate;
 import com.dclink.pojo.Council;
 import com.dclink.pojo.Election;
+import com.dclink.pojo.Faction;
 import com.dclink.pojo.History;
 import com.dclink.pojo.Inspection;
 import com.dclink.pojo.Item;
 import com.dclink.pojo.Party;
 import com.dclink.pojo.Person;
 import com.dclink.pojo.Rate;
+import com.dclink.pojo.Road;
+import com.dclink.pojo.Snapshot;
 import com.dclink.pojo.State;
 import com.dclink.pojo.Sub;
 import com.dclink.pojo.Zone;
@@ -169,7 +172,14 @@ public class DataController {
         return "";
     }
 
-	
+
+	@RequestMapping(value="/unuse.do",method=RequestMethod.PUT)
+	public @ResponseBody String unuse(@RequestBody int id) {
+		mainMapper.unuse(id);
+		
+        return "";
+    }
+
 	
 	@RequestMapping(value="/item.do",method=RequestMethod.POST)
 	public @ResponseBody String addItem(@RequestBody State state) {
@@ -274,5 +284,42 @@ public class DataController {
 		
         return "";
     }
+	
+	
+	@RequestMapping(value="/snapshot.do",method=RequestMethod.GET)
+	public @ResponseBody List<Snapshot> getSnapshot(@RequestParam("year") int year) {
+		List<Snapshot> ret = mainMapper.getSnapshot(year);
+		
+        return ret;
+    }
 
+	@RequestMapping(value="/scenarioSnapshot.do",method=RequestMethod.GET)
+	public @ResponseBody List<Snapshot> getScenarioSnapshot() {
+		List<Snapshot> ret = mainMapper.getScenarioSnapshot();
+		
+        return ret;
+    }
+
+	
+	@RequestMapping(value="/road.do",method=RequestMethod.GET)
+	public @ResponseBody List<Road> getRoad() {
+		List<Road> ret = mainMapper.getRoad();
+		
+        return ret;
+    }
+	
+	@RequestMapping("/cities.do")
+	public @ResponseBody List<Snapshot> cities() {
+		List<Snapshot> ret = mainMapper.getCities();
+		
+        return ret;
+    }
+
+	@RequestMapping(value="/faction.do",method=RequestMethod.GET)
+	public @ResponseBody List<Faction> getFaction() {
+		List<Faction> ret = mainMapper.getFaction();
+		
+        return ret;
+    }
+	
 }

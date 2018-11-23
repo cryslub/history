@@ -11,12 +11,15 @@ import org.apache.ibatis.annotations.Update;
 import com.dclink.pojo.Candidate;
 import com.dclink.pojo.Council;
 import com.dclink.pojo.Election;
+import com.dclink.pojo.Faction;
 import com.dclink.pojo.History;
 import com.dclink.pojo.Inspection;
 import com.dclink.pojo.Item;
 import com.dclink.pojo.Party;
 import com.dclink.pojo.Person;
 import com.dclink.pojo.Rate;
+import com.dclink.pojo.Road;
+import com.dclink.pojo.Snapshot;
 import com.dclink.pojo.State;
 import com.dclink.pojo.Sub;
 import com.dclink.pojo.Zone;
@@ -178,10 +181,36 @@ public interface MainMapper {
 
 
 
+	@Select("select c.id, c.name,c.longitude, c.latitude, s.population, s.faction, f.color "
+			+ "  from city c"
+			+ " inner join  snapshot s on c.id = s.city "
+			+ " inner join "
+			+ " ( select max(year) as year, city from snapshot where #{year} >= year group by city ) m  on m.year = s.year and m.city = s.city "
+			+ " left outer join faction f on f.id = s.faction "
+			+ " where  s.population > 0 and c.yn = 1" 
+			+ " ")
+	public List<Snapshot> getSnapshot(@Param("year") int year);
 
+	@Select("select start,end from road where yn = 1")
+	public List<Road> getRoad();
 
-	
+	@Select("select id,name from city")
+	public List<Snapshot> getCities();
 
+	@Update("update city set yn = 0 where id = #{id}")	
+	public void unuse(int id);
 
+	@Select("select id,name,color from faction")
+	public List<Faction> getFaction();
+
+	@Select("select c.id, c.name,c.longitude, c.latitude, s.population, s.faction, f.color, s.soldiers "
+			+ "  from city c"
+			+ " inner join  snapshot s on c.id = s.city "
+			+ " inner join "
+			+ " ( select max(s.year) as year, s.city from snapshot s , scenario sc where sc.year >= s.year  and sc.id = 1 group by s.city ) m  on m.year = s.year and m.city = s.city "
+			+ " left outer join faction f on f.id = s.faction "
+			+ " where  s.population > 0 and c.yn = 1" 
+			+ " ")
+	public List<Snapshot> getScenarioSnapshot();
 
 }

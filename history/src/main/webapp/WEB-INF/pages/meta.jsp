@@ -30,40 +30,12 @@
 		<button ng-click="login()">login</button>
 	</div>
 	<div ng-if="logged">
-		<select ng-model="personId" >
-			<option value="{{person.id}}" ng-repeat="person in persons | toArray:false  | orderBy:ord">{{person.id}}{{person.name}}</option>
-		</select>
-		<select ng-model="ord"> 
-			<option>name</option>
-			<option>-id</option>
-		</select>
-		<input ng-model="personName"/>
-		<select ng-model="personId" >
-			<option value="{{person.id}}" ng-repeat="person in persons | toArray:false  | filter : {'name':personName}">{{person.id}}{{person.name}}</option>
+		<input ng-model="cityName"/>
+		<select ng-model="cityId" >
+			<option value="{{city.id}}" ng-repeat="city in cities | toArray:false  | filter : {'name':cityName}">{{city.id}}{{city.name}}</option>
 		</select>
 		
-	  	<button class="btn-primary" ng-click="addPerson(personName)">Add Person</button>
-	  	<button class="btn-primary" ng-click="setPhoto(personId)">Set Photo</button>
-	  	
-	  	<br>
-	  	<br>
-		<input ng-model="party.name"/>
-		<input ng-model="party.color"/>
-		<input ng-model="party.textColor"/>
-	  	<button class="btn-primary" ng-click="addParty(party)">Add Party</button>
-	  	<br>
-	  	<input ng-model="zone.name"/>
-		<input ng-model="zone.code"/>
-	  	<button class="btn-primary" ng-click="addZone(zone)">Add Zone</button>
-	  	<br>
-	  	
-<!-- 	  	<button class="btn-primary" ng-click="addInspection()">Add Inspection</button> -->
-	  	
-	  	
-	  	<pre>
-	  	
-	  	
-	  	</pre>
+		<button ng-click="unuse(cityId)">unuse</button>	
 	</div>
 	
  </div>
@@ -94,20 +66,20 @@ app.controller('myCtrl', function($scope,$http) {
 		$scope.logged=true;
 	}
 
-	$scope.setPhoto = function(id){
-		$http.put("data/photo.do",id)
+	$scope.unuse = function(id){
+		$http.put("data/unuse.do",id)
 	    .then(function(response) {
 	    });
 		
 	}
 	
 
-	$scope.getPersons = function(){
-		$http.get("data/persons.do")
+	$scope.getCities = function(){
+		$http.get("data/cities.do")
 	    .then(function(response) {
-	    	$scope.persons = {};
-	        response.data.forEach(function(person) {
-	        	$scope.persons[person.id] = person
+	    	$scope.cities = {};
+	        response.data.forEach(function(city) {
+	        	$scope.cities[city.id] = city
 	        });
 	    });
 	}
@@ -214,8 +186,8 @@ app.controller('myCtrl', function($scope,$http) {
 	};
 
 
-	$scope.getPersons();
-	$scope.getParties();
+	$scope.getCities();
+//	$scope.getParties();
 // 	$scope.getInspections();
 
 });
