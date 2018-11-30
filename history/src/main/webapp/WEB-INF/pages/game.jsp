@@ -42,7 +42,7 @@
         width: 270px;
         position: absolute;
         left: 20px;
-        top: 63px;
+        top: 33px;
 
         background-color: rgba(0,0,0,0.2);
 
@@ -81,8 +81,12 @@
 		<div id="container"></div>
 		  <div id="currentInfo">
 		  	<label style="color:white;">{{yearString}}.{{dateString}}</label> 
-		  	<button class="btn btn-sm" ng-click="pause()"><span class="glyphicon glyphicon-pause"></span></button>
-		  	<button class="btn btn-sm" ng-click="play()"><span class="glyphicon glyphicon-play"></span></button>
+		  	<span ng-hide="newGame">
+			  	<button class="btn btn-sm" ng-hide="timer==null" ng-click="pause()" title="Pause"><span class="glyphicon glyphicon-pause"></span></button>
+			  	<button class="btn btn-sm" ng-show="timer==null" ng-click="play()"  title="Resume"><span class="glyphicon glyphicon-play"></span></button>
+		  	</span>
+		  	<br/>
+		  	<label style="color:white;" ng-show="newGame">Choose your faction</label> 		  	
 		  </div>
 
 		<div class="modal fade" id="city" tabindex="-1" role="dialog">
@@ -104,12 +108,17 @@
 						<div id="city-body" class="carousel slide" data-interval="false">
 							<div class="carousel-inner">
 							    <div class="carousel-item active">
-									<span style="color:silver;"><span class="glyphicon glyphicon-pawn" title="Soldiers"> </span> <strong title="Garrison">{{selected.garrison|number}}</strong> / <label title="Total">{{selected.soldiers|number}}</label> / <label title="Potential">{{(selected.mans)|number:0}}</label></span>
+									<span style="color:silver;"><span class="glyphicon glyphicon-pawn" title="Soldiers"> </span> <strong title="Garrison">{{selected.garrison|number}}</strong>  / <label title="Potential">{{(selected.mans)|number:0}}</label></span>
 									<span ng-show="selected.faction == faction.id">
 										<button class="btn btn-primary btn-sm" title="Cancel Recruiting" ng-show="selected.recruiting > 0" ng-click="cancelRecruit(selected)"><span class="glyphicon glyphicon-remove"></span></button>
-										<button class="btn btn-primary btn-sm" title="Recruit" href="#city-body" ng-hide="selected.recruiting > 0" ng-disabled="selected.mans==0 || selected.population<100 " data-slide="next" ng-click="stat='recruit';recruited=getRecruitMax(selected)"><span class="glyphicon glyphicon-bullhorn"></span></button>
+										<button class="btn btn-primary btn-sm" title="Recruit" href="#city-body" ng-hide="selected.recruiting > 0" ng-disabled="checkRecruit(selected) " data-slide="next" ng-click="stat='recruit';recruited=getRecruitMax(selected)"><span class="glyphicon glyphicon-bullhorn"></span></button>
 										<button class="btn btn-primary btn-sm" title="Muster" href="#city-body" ng-disabled="selected.garrison<50 " data-slide="next" ng-click="stat='muster';mustered = selected.garrison;"><span class="glyphicon glyphicon-bell"></span></button>
 									</span>
+									<br/>
+									<span ng-show="newGame && selected.faction>0">
+										<button class="btn btn-primary btn-sm" title="Choose This Faction"  ng-click="selectFaction(selected)"><span class="glyphicon glyphicon-ok"></span></button>
+									</span>
+
 							    </div>
 							    <div class="carousel-item">
 								    <form class="form-inline">
@@ -117,7 +126,7 @@
 										    <button class="btn btn-primary btn-sm mb-2 mr-sm-2" title="Go Back" href="#city-body" data-slide="prev"><span class="glyphicon glyphicon-chevron-left"></span></button>
 											<span ng-show="stat=='muster'">
 											    <input class="form-control mb-2 mr-sm-2" type="number" max="{{selected.garrison}}" min="50" ng-model="mustered"></input>								    
-											    <button class="btn btn-primary btn-sm mb-2""  data-dismiss="modal" title="Muster" ng-click="muster(selected,mustered)" ng-disabled="mustered== undefined">
+											    <button class="btn btn-primary btn-sm mb-2""  data-dismiss="modal" title="Muster" ng-click="muster(selected,mustered,true)" ng-disabled="mustered== undefined">
 											    	<span class="glyphicon glyphicon-ok"></span>
 											    </button>
 										    </span>										    
@@ -149,7 +158,8 @@
 								<span class="badge ng-binding" ng-style="{'color':'white','background-color': factions[selected.faction].color}">
 									{{factions[selected.faction].name}}
 								</span>
-								<small  style="color:silver;"> <small><span class="glyphicon glyphicon-user"> </span></small> {{selected.soldiers|number}}</small>
+								<small  style="color:silver;" title="Soldiers"> <small><span class="glyphicon glyphicon-user"> </span></small> {{selected.soldiers|number}}</small>
+								<small  style="color:silver;" title="Morale"> <small><span class="glyphicon glyphicon-heart"> </span></small> {{selected.morale|number:0}}</small>
 						</h5>
 						<button type="button" class="close" data-dismiss="modal"
 							aria-label="Close" style="margin-right: 0px;">
@@ -173,7 +183,7 @@
 									<button class="btn btn-primary btn-sm mb-2 mr-sm-2" title="Go Back" href="#force-body" data-slide="prev"><span class="glyphicon glyphicon-chevron-left"></span></button>
 
 							    	<div class="list-group">
-									  	<a href="#" class="list-group-item" ng-repeat="destiny in selected.position.destinies" ng-click="move(selected,destiny)" data-dismiss="modal" >{{destiny.name}}</a>
+									  	<a href="#" class="list-group-item" ng-repeat="destiny in selected.position.destinies" ng-click="move(selected,destiny.city,destiny.road)" data-dismiss="modal" >{{destiny.city.name}}</a>
 									</div>
 							    </div>
 							    <div class="carousel-item">
@@ -280,7 +290,15 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	 		  
 	 		  var raycaster = new THREE.Raycaster();
 	 		  raycaster.setFromCamera( mouse, camera );
-	 		  var intersects = raycaster.intersectObjects( scene.children );
+	 		  
+	 		  var array  = [];
+	 		 scene.children.forEach(function(child){
+	 			if(child.type=='Mesh'){
+	 				array.push(child);
+	 			} 
+	 		 });
+	 		  
+	 		  var intersects = raycaster.intersectObjects( array );
 	 		
 	 		 $scope.clicked = [];
 	 		 intersects.forEach( function(intersect){
@@ -324,6 +342,14 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	 var lineCoord = [];
 	 
 		var data = [];
+	
+	$scope.selectFaction = function(selected){
+		
+		$scope.faction=$scope.factions[selected.faction];
+		$scope.newGame=false;
+		//$scope.play();
+		
+	}	
 		
 	$scope.getSnapshot = function(){
 		
@@ -338,7 +364,14 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 			 		city.mans = Math.floor(city.population/10);
 			 		city.garrison = city.soldiers;
 			 		city.destinies = [];
+			 		city.recruiting = 0;
+			 		city.forces = [];
+			 		
 			 		data.push(city)
+			 		
+			 		if($scope.factions[city.faction] != undefined){
+			 			$scope.factions[city.faction].cities.push(city);
+			 		}
 //					data = data.concat([city.latitude,city.longitude,city.population,city.faction]);
 			 	});
 			 	
@@ -350,7 +383,6 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		       });
 		       
 		       globe.createPoints();
-			   	globe.animate();
 
 			  	 citiesArray = Object.values(list);
 
@@ -368,8 +400,11 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 				if(cities[line.start] != undefined && cities[line.end] != undefined){
 
 					line.type ='road';
-					cities[line.start].destinies.push(cities[line.end]);
-					cities[line.end].destinies.push(cities[line.start]);
+					line.destinies = [{road:line,city:cities[line.start]},{road:line,city:cities[line.end]}];
+					line.forces = [];
+					
+					cities[line.start].destinies.push({road:line,city:cities[line.end]});
+					cities[line.end].destinies.push({road:line,city:cities[line.start]});
 
 					lineCoord.push({start:cities[line.start],end:cities[line.end]});
 				}
@@ -385,8 +420,15 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	    .then(function(response) {
 	    	var list = response.data;
 			angular.forEach(list,function(faction){
+				
+				faction.cities = [];
+				faction.forces = [];
+				faction.targeted = [];
+				
 				$scope.factions[faction.id] = faction;
 		 	});
+			
+			$scope.getSnapshot();
 	    	
 	    });
 		
@@ -411,37 +453,71 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		$scope.mustered = city.garrison;
 	}
 	
-	$scope.muster = function(city){
+	$scope.muster = function(city,mustered,openDialog){
 		
-		city.garrison -= $scope.mustered;
-		$('#city').modal('toggle');
+		city.garrison -= mustered;
+
 		
-		var force = angular.copy(city);
-		force.type = 'force';
-		force.soldiers = $scope.mustered;
-		force.name = city.name+' Force';
-		force.origin = city;
-		force.position = city;
+		var force = {
+			faction:city.faction,
+			longitude : city.longitude,
+			latitude : city.latitude,
+			type :'force',
+			soldiers : mustered,
+			name :city.name+' Force',
+			origin : city,
+			position: city,
+			morale:100
+		}
 		
-		var object = globe.addForce(force,$scope.mustered);
+		var object = globe.addForce(force,mustered,$scope.factions[force.faction].color);
 		force.object = object;
 		objectMap[object.id] = force;
 		
 		forceMap[object.id] = force;
+
+		if(openDialog){
+
+			$('#city').modal('toggle');
+
+			$scope.selected = force;
+
+			$('#force').modal('toggle');
+
+		}
+
+		city.forces.push(force);
 		
-		$scope.selected = force;
+		$scope.factions[force.faction].forces.push(force);
 		
-		$('#force').modal('toggle');
-		
-		
+		return force;
 //		globe.animate();
 	}
 	
-	$scope.recruit = function(city){
+	$scope.checkRecruit = function(city){
 		
-		city.recruiting = $scope.recruited;
+		if(city == undefined) return true;
 		
-		var delay = Math.floor(city.recruiting*30/(city.population/100)) + 1;
+		if(city.forces == undefined){
+			return true;
+		}
+		
+		var ret = false;
+		city.forces.forEach(function(force){
+			if(force.faction != city.faction){
+				ret = true;
+			}
+		});
+		
+		return ret || city.mans==0 || city.population<100;
+		
+	}
+	
+	$scope.recruit = function(city,recruited){
+		
+		city.recruiting = recruited;
+		
+		var delay = Math.floor(city.recruiting*90/(city.population/100)) + 1;
 		
 		city.recruitJob = {
 			fn:function(){
@@ -470,23 +546,50 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		var city = force.origin;
 		city.garrison += force.soldiers;
 		
-		globe.remove(force.object);
-		delete force;		
+
+		disband(force);
+
 	}
 	
-	$scope.move = function(force,destiny){
+	$scope.move = function(force,destiny,road){
+		
+		if(force.position ===road){
+			
+		}else{
+			var forces = force.position.forces;
+			forces.splice(forces.indexOf(force),1);
+			force.position = road;
+			
+			force.position.forces.push(force);
+			
+		}
+		
 		force.destiny = destiny;
-		force.position = {destinies:[force.position,destiny]};
 		force.state = 'move';
 		
 	}
 	
 	$scope.checkAnnex = function(force){
 		
-		if(force!= undefined && force.position != undefined){
-			if(force.faction != force.position.faction){
-				if(force.position.population/20 <= force.soldiers){
+		if(force!= undefined && force.destiny != undefined){
+			if(force.destiny.type=='city' && force.faction != force.destiny.faction){
+				if(near(force,force.destiny) ){
+
+				
+				//if(force.position.population/20 <= force.soldiers){
+					
+					var check = false;
+					force.destiny.forces.forEach(function(f){
+						if(f.faction != force.faction){
+							check = true;
+						}
+					});
+					
+					
+					if(check) return true;
+					
 					return false;
+				//}
 				}
 			}
 		}
@@ -498,19 +601,38 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		
 		force.annexing = true;
 		
-		var target = force.position;
+		var target = force.destiny;
 				
 		var delay = Math.floor((target.population/20 ) *30 /force.soldiers) + 1;
 		
+		
+		if(target.recruiting > 0){
+			$scope.cancelRecruit(target);
+		}
+		
 		force.annexJob = {
 			fn:function(){
+				
+				if($scope.factions[target.faction] != undefined){
+					var cities = $scope.factions[target.faction].cities;
+					cities.splice(cities.indexOf(target),1);
+				}
+							
 				target.faction = force.faction;
+				
+				$scope.factions[target.faction].cities.push(target);
+				
 				target.garrison = 0;
 				target.soldiers = 0;
 				
 				globe.changeColor(target.object,$scope.factions[force.faction].color);
 
 				force.annexing = false;
+				
+				$scope.refreshTargets  = true;
+				
+				var targeted = $scope.factions[force.faction].targeted;
+				targeted.splice(targeted.indexOf(target.id),1);
 
 			},
 			delay:delay
@@ -518,6 +640,7 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		
 		jobs.push(force.annexJob);
 		
+
 	}
 	
 	$scope.cancelAnnex = function(force){
@@ -539,10 +662,189 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	$scope.start = function(faction){
 		$scope.faction = faction;
 		$scope.play();
+		
+	}
+	
+	function aiRecruit(city){
+		
+		if(!$scope.checkRecruit(city) && city.recruiting == 0){
+			var recruited = city.mans < city.population/100 ? city.mans :city.population/100;
+			recruited = Math.floor(recruited);
+			$scope.recruit(city,recruited);
+		}	
+	}
+	
+	
+	function makeAiTarget(){
+		angular.forEach($scope.factions,function(faction){
+			
+			faction.targets = [];
+			
+			faction.cities.forEach(function(city){
+				city.destinies.forEach(function(destiny){
+					if(destiny.city.faction != city.faction){
+						var filtered = $filter('filter')(faction.targeted, destiny.city.id)
+						if(filtered.length == 0){
+							faction.targets.push(destiny.city);
+						}
+					}
+				});
+			});
+		});
+		
+		$scope.refreshTargets = false;
+		
+	}
+	
+	
+	function aiSetTarget(faction){
+		var weights = [];
+		
+		faction.targets.forEach(function(target){												
+
+			var w = 0;
+			
+			target.destinies.forEach(function(destiny){
+				if(destiny.city.faction == faction.id){
+					if(target.population/10 + target.garrison*2 <= destiny.city.garrison ){
+						
+						w +=   (target.population/10 + target.garrison*2 ) *100 / destiny.city.garrison;
+
+						if(target.faction == 0){
+							w+=50;
+						}
+						
+					}
+					
+				}
+			});
+			
+			weights.push({weight:w, city:target});												
+			
+		});
+		
+		
+		
+		weights = $filter('orderBy')(weights, '-weight');
+		
+		if(weights.length > 0){
+			var target = weights[0];
+			if(target.weight > 0){
+				if(Math.random()<target.weight * 0.0005){
+					var city = target.city;
+					city.destinies.forEach(function(destiny){
+						if(destiny.city.faction == faction.id){
+							if(city.population/10 + city.garrison*2 <= destiny.city.garrison && destiny.city.garrison>=50){
+
+								var force = $scope.muster(destiny.city,destiny.city.garrison,false);
+
+								force.positions = [];											
+								force.positions.push(city);
+
+								$scope.move(force,city,destiny.road);
+								
+								
+								faction.targeted.push(city.id);
+								
+								faction.targets.splice(faction.targets.indexOf(city),1);
+							}
+							
+						}
+					});								
+				}
+			}
+		}
+
+	}
+	
+	function aiMoveForces(faction){
+		faction.forces.forEach(function(force){
+			if(force.state =='stop'){
+				
+				
+				if(!$scope.checkAnnex(force) && !force.annexing){
+					$scope.annex(force);
+				}else{
+					if(force.destiny != undefined){
+						if(force.destiny.faction == force.faction && force.destiny.id != force.origin.id){
+							force.destiny.destinies.forEach(function(destiny){
+								if(destiny.city === force.origin){
+									$scope.move(force,force.origin,destiny.road);											
+								}
+							});
+						}
+					}
+				}
+
+				
+				if(force.position.id == force.origin.id){
+					
+					if(!cityInvading(force.position)){
+						$scope.breakUp(force);
+						
+					}
+			
+				}
+				
+				//							$scope.move(force,)
+			}
+		});			
+	}
+	
+	function cityInvading(city){
+		var invading = false;
+		city.destinies.forEach(function(destiny){
+			destiny.road.forces.forEach(function(force){
+				if(force.faction != city.faction){
+					invading = true;
+				}
+			});						
+		});
+		
+		return invading;
+
+	}
+	
+	function ai(count){
+		
+		if($scope.refreshTargets){
+			makeAiTarget();
+		}
+		
+		angular.forEach($scope.factions,function(faction){
+			if(faction.id != $scope.faction.id){
+				
+				
+				
+				faction.cities.forEach(function(city){
+										
+					if(cityInvading(city)){
+						if(city.garrison >=50){							
+							var force = $scope.muster(city,city.garrison,false);
+							force.state = 'stop';
+						}
+					}else{
+						aiRecruit(city);
+					}
+				});
+				
+				if(count%9==0){
+										
+					aiSetTarget(faction);
+				}	
+
+				
+				if(count%3==0){
+					aiMoveForces(faction);		
+				}
+
+			}
+		});
+		
 	}
 	
 	function startTimer(){
-		var count = 0;
+		var count = 1;
 		$scope.timer = $interval(function(){
 			
 			if(count%3 == 0){
@@ -557,7 +859,24 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 				setTimeString();
 			}
 			
-			moveForces();
+			if(count%90 == 0){
+				citiesArray.forEach(function(city){
+					var grow = Math.floor(city.population*0.005) +1;
+					city.population += grow;
+					
+					var g = Math.floor(grow*0.1)
+					if(g == 0){
+						if(Math.random()<0.1){
+							g = 1;
+						}
+					}
+					
+					city.mans +=g;
+					
+				});
+			}
+			
+			moveForces(count);
 			
 			jobs.slice(0).forEach(function(job){
 				if(--job.delay == 0){
@@ -566,14 +885,88 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 				}
 			});
 			
+			ai(count);
+			
 			count++;
 			
 		},1000);	
 	}
 	
+	function disband(force){
+		
+		globe.remove(force.object);
+		
+		var forces = $scope.factions[force.faction].forces;
+		forces.splice(forces.indexOf(force),1);
+
+		forces = force.position.forces;
+		forces.splice(forces.indexOf(force),1);
+		
+		
+		delete forceMap[force.object.id];
+		delete force;
+		
+		console.log($scope.factions[force.faction].forces);
+
+	}
+
+	function checkDisband(force){
+		
+		if(force.soldiers <= 0){
+
+			disband(force);
+			
+		}
+		
+	}
 	
+	function battle(force,f){
+		
+		var d = Math.min(force.soldiers,f.soldiers,30);
+
+		var ra = Math.random();
+		var rb = Math.random();
+		var a = Math.floor( ra* d)+1;		
+		var b = Math.floor( rb* d)+1;
+		
+		var ma = Math.min(force.soldiers,a);
+		var mb = Math.min(f.soldiers,b);
+		
+		if(ra>=0.9) {
+			f.morale++;
+		}		
+
+		if(ra>=0.8) {
+			if(force.morale>0) force.morale--;
+		}		
+
+		if(ra>=0.9) {
+			force.morale++;
+		}
+		if(ra>=0.8) {
+			if(f.morale>0) f.morale--;
+		}
+
+		 
+		force.soldiers -= ma;
+		f.soldiers -= mb;
+		
+		force.origin.population -= ma;
+		f.origin.population -= mb;
+		
+		checkDisband(force);
+		checkDisband(f);
+	}
 	
-	function moveForces(){
+	function distanceTo(a,b){
+		return a.object.position.distanceTo(b.object.position);
+	}
+
+	function near(a,b){
+		return distanceTo(a,b) <= 0.3;
+	}
+
+	function moveForces(count){
 		
 		angular.forEach(forceMap,function(force){
 			if(force.state == 'move'){
@@ -581,11 +974,90 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 				
 				var destiny = force.destiny;
 				
-				if(!globe.move(force.object,destiny.object)){
-					force.position = destiny;
-					force.state='stop';
+				
+				var accessable = true;
+
+				if(near(force,destiny)){
+
+					if(destiny.faction != force.faction && destiny.faction != 0){
+						accessable = false;
+						force.state ='stop';
+
+					}
+					
+					destiny.forces.forEach(function(f){
+						if(f.faction != force.faction){
+							accessable = false;					
+							force.state ='stop';
+
+						}
+					});
+					
+					
+//					if(!$scope.checkAnnex(force)){
+//						$scope.annex(force);
+//					}
+				}
+
+				if(accessable){
+
+					if(!globe.move(force.object,destiny.object,0.05)){
+					
+					
+						
+						var forces = force.position.forces;
+						forces.splice(forces.indexOf(force),1);
+	
+						
+						force.position = destiny;
+						force.state='stop';
+						
+						
+						force.position.forces.push(force);
+						
+						
+					}
 				}
 				
+				if(count%3 ==0){
+					if(force.morale>50){
+						force.morale--;
+					}
+				}
+				
+			}
+			
+			force.position.destinies.forEach(function(destiny){
+				destiny.road.forces.forEach(function(f){
+					if(f.faction != force.faction){
+						if(near(force,f) ){
+							battle(force,f);
+						}
+					}
+
+				});						
+			});
+
+			
+			if(force.annexing){
+
+				var d = Math.min(force.soldiers,force.destiny.garrison,30);
+
+
+				var a = Math.floor(Math.random() * d);		
+				var b = Math.floor(Math.random() * d);
+
+				var ma = Math.min(force.soldiers,a);
+				var mb = Math.min(force.destiny.garrison,b);
+				
+				
+				force.soldiers -= ma;
+				force.destiny.garrison -=mb;
+				
+				force.origin.population -= ma;
+				force.destiny.population -= mb;
+				
+				checkDisband(force);
 			}
 		});
 		
@@ -619,13 +1091,14 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	$scope.getFaction();
 	globe.animate();
 
-	$scope.getSnapshot();
 	
 	initTime();
 
     document.body.style.backgroundImage = 'none'; // remove loading
     
-	$('#start').modal({ backdrop: 'static',   keyboard: false});
+    $scope.newGame = true;
+    $scope.refreshTargets = true;
+//	$('#start').modal({ backdrop: 'static',   keyboard: false});
 
 });
 

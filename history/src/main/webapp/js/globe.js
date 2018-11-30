@@ -230,22 +230,22 @@ DAT.Globe = function(container, opts) {
 
   }
   
-  function addForce(city, size) {
-    var lat, lng, size, color, i, step, colorFnWrapper;
+  function addForce(city, size,color) {
+    var lat, lng, size, i, step, colorFnWrapper;
 
 
    
     var subgeo = new THREE.Geometry();
 
-    if(city.color != null){
-    	color = new THREE.Color(city.color); 
-    }
+//    if(city.color != null){
+    	color = new THREE.Color(color); 
+ //   }
 //    addCylinder(city.latitude, city.longitude, size, color,subgeo);
 
     var lat = city.latitude;
     var lng = city.longitude;
     
-    var geometry = new THREE.CylinderGeometry( 1.2, 1.2, 7  );
+    var geometry = new THREE.CylinderGeometry( 1, 1, 7  );
     var material = new THREE.MeshToonMaterial( {color: color} );
 //	geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0,-0.5));
 
@@ -255,13 +255,14 @@ DAT.Globe = function(container, opts) {
     var phi = (90 - lat) * Math.PI / 180;
     var theta = (180 - lng) * Math.PI / 180;
 
-    var sphereSize = 200.3; 
+    var sphereSize = 200; 
     
     point.position.x = sphereSize * Math.sin(phi) * Math.cos(theta);
     point.position.y = sphereSize * Math.cos(phi);
     point.position.z = sphereSize * Math.sin(phi) * Math.sin(theta);
 
     point.geometry.rotateX((-94 * Math.PI) / 180);
+    point.geometry.translate(0,0,-5);
     point.lookAt(mesh.position);
 
     
@@ -321,7 +322,7 @@ DAT.Globe = function(container, opts) {
 		  
 		  var geometry = new THREE.BufferGeometry().setFromPoints( points );
 
-			var line = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xaaaaaa, opacity: 0.3 } ) );
+			var line = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xaaaaaa, opacity: 0.3, linewidth:1} ) );
 			scene.add( line );
 	  });
   }
@@ -330,7 +331,7 @@ DAT.Globe = function(container, opts) {
   function addPoint(lat, lng, size, color, subgeo) {
 
 	  
-	var geometry = new THREE.BoxGeometry(0.75, 0.75, 1);
+	var geometry = new THREE.BoxGeometry(1, 1, 0.3);
 	geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0,-0.5));
 
 	
@@ -347,12 +348,12 @@ DAT.Globe = function(container, opts) {
 
     point.lookAt(mesh.position);
     
-    var scale = Math.sqrt(size)/500;
-    scale = Math.max( scale, 0.2 );
+    var scale = Math.sqrt(size)/600;
+    scale = Math.max( scale, 0.15 );
 //    scale = Math.sqrt(scale);
     point.scale.x = scale;
     point.scale.y = scale;
-    point.scale.z = scale/2; // avoid non-invertible matrix
+    point.scale.z = scale; // avoid non-invertible matrix
     point.updateMatrix();
 
     for (var i = 0; i < point.geometry.faces.length; i++) {
@@ -382,9 +383,7 @@ DAT.Globe = function(container, opts) {
   }
   
   
-  function move(object,target){
-	  
-	  var speed = 0.1
+  function move(object,target,speed){
 
 	  var dir = new THREE.Vector3();
 	  
