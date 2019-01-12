@@ -41,7 +41,7 @@ body { margin: 0; }
 .others .operate{display:none;}
 
 #currentInfo {
-   width: 270px;
+   width: 300px;
    position: absolute;
    left: 20px;
    top: 33px;
@@ -91,6 +91,7 @@ body { margin: 0; }
 
 }
 
+
 </style>
 
 
@@ -104,16 +105,22 @@ body { margin: 0; }
 		
 		<div id="container"></div>
 		  <div id="currentInfo">
-		  	<label style="color:white;">{{yearString}}.{{dateString}}</label> 
+		  	<div class="form-check">
+		  		<input type="checkbox" class="form-check-input"  ng-model="showUnuse" ng-click="changeShowUnuse()">
+		  	</div>
 		  	<span ng-hide="newGame">
 			  	<button class="btn btn-sm" ng-hide="timer==null" ng-click="pause()" title="Pause"><span class="glyphicon glyphicon-pause"></span></button>
 			  	<button class="btn btn-sm" ng-show="timer==null" ng-click="play()"  title="Resume"><span class="glyphicon glyphicon-play"></span></button>
 		  	</span>
 		  	<br/>
-		  	<label style="color:white;" ng-show="newGame">Choose your faction</label> 		  	
+
+			<div class="list-group">
+			  <a href="#" class="list-group-item" ng-class="{'active':scenario.id==selectedScenario.id}" ng-repeat="scenario in scenarios" ng-click="selectScenario(scenario)">{{scenario.name}}</a>
+			</div>
+
 		  </div>
 
-		<div class="modal fade modeless" id="city" tabindex="-1" role="dialog">
+		<div class="modal fade" id="city" tabindex="-1" role="dialog">
 			<div class="modal-dialog " role="document">
 				<div class="modal-content">
 					<div class="modal-header">
@@ -135,6 +142,10 @@ body { margin: 0; }
 								<span class="badge ng-binding" ng-style="{'color':'white','background-color': factions[selected.faction].color}" title="Faction">
 									{{factions[selected.faction].name}}
 								</span>
+								<select ng-change="changeSnapshot(selected)" ng-model="selected.faction" ng-options="faction.id as faction.name for faction in factions">
+								</select> 
+								
+								
 								<small class="text-muted" title="Population"> <small><span class="glyphicon glyphicon-user"> </span></small> {{selected.population|number}}</small>
 								<small class="text-muted" title="Loyalty"> <small><span class="glyphicon glyphicon-heart"> </span></small> {{selected.loyalty|number:0}}</small>
 							</span>
@@ -152,6 +163,15 @@ body { margin: 0; }
 									<div class="container">
 										<div class="row">
 											<div class="col-sm">	
+												 <div class="form-check">
+													 <input type="checkbox" class="form-check-input" id="useCheck" ng-model="selected.yn" ng-click="setUse(selected)">
+													  <label class="form-check-label" for="useCheck">Use</label>
+													  
+													  {{selected.id}} {{selected.snapshot}} {{selected.year}}  
+													<button class="btn btn-primary btn-xs" ng-show="selected.year != selectedScenario.year" ng-click="addSnapshot(selected)">Add</button>
+
+												  </div>
+
 												<span class="glyphicon glyphicon-bookmark text-primary" title="{{trait.name}}" ng-repeat="trait in selected.traits"> </span>		
 											</div>
 										</div>	
@@ -172,6 +192,19 @@ body { margin: 0; }
 												<button class="btn btn-primary btn-xs operate" title="Change" href="#city-body"  data-slide="next" ng-click="stat='governer';" ng-show="(selected.heroes|toArray).length>0">
 													<span class="glyphicon glyphicon-refresh"></span></button>
 												
+												<button class="btn btn-primary btn-xs" ng-click="addSnapshotSub(selected)">Add</button>
+											</div>
+										</div>
+										<div class="row" ng-repeat="sub in selected.sub">
+											<div class="col-sm">    
+												<select ng-change="changeSnapshotSub(sub)" ng-model="sub.type">
+													<option value="governer">governer</option>
+													<option value="hero">hero</option>
+												</select>
+												<select ng-change="changeSnapshotSub(sub)" ng-model="sub.value" ng-options="hero.id as hero.name for hero in heroes | toArray:false  | orderBy:'-id'"></select> 
+												{{sub.value}}
+												<button class="btn btn-primary btn-xs" ng-click="removeSnapshotSub(sub)">Remove</button>
+
 											</div>
 										</div>
 										<div class="row">
@@ -196,6 +229,14 @@ body { margin: 0; }
 												</div>
 											</div>
 
+								    	</div>
+								    	<div class="row">
+											<div class="col-sm">	    
+												<div ng-repeat="destiny in selected.destinies">
+												{{destiny.city.name}} <button class="btn btn-primary btn-xs" ng-click="removeRoad(destiny)">Remove</button>		
+												</div>
+												<button class="btn btn-primary btn-xs" href="#city-body"   data-slide="next" ng-click="stat='road'">Add Road</button>												
+											</div>
 								    	</div>
 								    	<hr/>
 										<div class="row">
@@ -318,6 +359,19 @@ body { margin: 0; }
 										    	<span class="glyphicon glyphicon-chevron-right"></span></button>
 										    
 								    	 </div>
+									</div>
+									<div ng-show="stat=='road'">
+									     <div class="row" >
+									    
+									    	<div class="col-sm">
+									    	
+										    	<ul class="list-group">
+												  	<li class="list-group-item d-flex justify-content-between align-items-center" ng-repeat="city in cities" ng-if="city.yn" ng-click="addRoad(selected,city)">
+												  		{{city.name}}
+													</li>
+												</ul>
+											</div>
+										</div>										
 									</div>
 									<div ng-show="stat=='heroes'">
 											
@@ -1093,6 +1147,26 @@ body { margin: 0; }
 				</div>
 			</div>
 		</div>
+		
+		<div class="modal fade" id="scenario" tabindex="-1" role="dialog">
+			<div class="modal-dialog " role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">
+							Select Scenario
+						</h5>
+					</div>
+					<div class="modal-body">
+						<div class="list-group">
+						  <a href="#" class="list-group-item" ng-repeat="scenario in scenarios" ng-click="selectScenario(scenario)">{{scenario.name}}</a>
+						</div>
+						
+					</div>
+
+				</div>
+			</div>
+		</div>
+		
 	</div>
 
 	<script>
@@ -1269,10 +1343,12 @@ var app = angular.module('myApp', ['angular-toArrayFilter','ui.bootstrap']);
 app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 
 
-	 var cities = {};
+	$scope.cities = {};
 	$scope.stat='default';
 
-	$scope.factions = {};
+	$scope.showUnuse = false;
+	
+	$scope.factions = {0:{name:'None',id:0}};
 	$scope.buildings = {};
 	$scope.weapons = {};
 	$scope.traits = {};
@@ -1318,7 +1394,7 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	 var objectMap = {};
 	 var forceMap = {};
 	 
-	 var citiesArray = Object.values(cities);
+	 var citiesArray = Object.values($scope.cities);
 	 var cityMap = {};
 	 var snapshotMap = {};
 	 
@@ -1394,6 +1470,26 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	 var lineCoord = [];
 	 
 		var data = [];
+		
+		
+	$scope.addRoad = function(selected,city){
+		$http.post("data/road.do",{
+			start:selected.id,
+			end:city.id,
+			scenario:$scope.selectedScenario.id
+		}).then(function(response) {
+	//    	$scope.addScenarioRoad();
+//	    	$("#scenario").modal();
+	    });
+	}
+
+
+	$scope.removeRoad = function(destiny){
+		$http.delete("data/road.do?id="+destiny.road.id).then(function(response) {
+	//    	$scope.addScenarioRoad();
+//	    	$("#scenario").modal();
+	    });
+	}
 	
 	$scope.selectFaction = function(selected){
 		
@@ -1402,7 +1498,88 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		//$scope.play();
 		
 	}	
+	
+	$scope.getScenario = function(){
+		$http.get("data/scenario.do")
+	    .then(function(response) {
+	    	
+	    	$scope.scenarios = response.data;
+	    	
+	    	$scope.selectScenario($scope.scenarios[0]);
+	    	
+//	    	$("#scenario").modal();
+	    });
 		
+	}
+	
+	$scope.setUse = function(selected){
+
+		$http.put("data/use.do",{
+			scenario:selected.scenario,
+			id:selected.id,
+			yn:selected.yn
+		}).then(function(){
+			
+		});
+		
+	}
+	
+	$scope.changeSnapshot = function(selected){
+		$http.put("data/snapshot.do",{
+			faction:selected.faction,
+			id:selected.id,
+			year:selected.year,
+			population:selected.population
+		}).then(function(){
+			
+		})		
+	}
+
+	$scope.changeSnapshotSub = function(sub){
+		$http.put("data/snapshot/sub.do",{
+			id:sub.id,
+			type:sub.type,
+			value:sub.value
+		}).then(function(){
+			
+		})		
+	}
+
+	
+	$scope.removeSnapshotSub = function(sub){
+		$http.delete("data/snapshot/sub.do?id="+sub.id,{
+			id:sub.id,
+			type:sub.type,
+			value:sub.value
+		}).then(function(){
+			
+		})		
+	}
+
+	
+	$scope.addSnapshot = function(selected){
+		$http.post("data/snapshot.do",{
+			id:selected.id,
+			population:selected.population,
+			year:$scope.selectedScenario.year
+		}).then(function(){
+			
+		})		
+	}
+
+	$scope.addSnapshotSub = function(selected){
+		$http.post("data/snapshot/sub.do",{
+			snapshot:selected.snapshot
+		}).then(function(){
+			
+		})		
+	}
+
+	
+	$scope.changeShowUnuse = function(){
+		 $scope.addData($scope.selectedScenario);
+	}
+	
 	$scope.getSnapshot = function(){
 		
 			$http.get("data/scenarioSnapshot.do")
@@ -1414,7 +1591,7 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 			 		
 			 		var c = new City(city,$scope);
 			 		
-			 		cities[city.id] = c;
+			 		$scope.cities[city.id] = c;
 			 		
 			 		
 			 		data.push(c)
@@ -1422,7 +1599,7 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 			 		cityMap[city.id] = c;
 			 		snapshotMap[city.snapshot] = c;
 			 		
-			 		if($scope.factions[city.faction] != undefined){
+			 		if($scope.factions[city.faction] != undefined && city.faction != 0){			 			
 			 			$scope.factions[city.faction].cities.push(c);
 			 		}
 //					data = data.concat([city.latitude,city.longitude,city.population,city.faction]);
@@ -1437,7 +1614,7 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		       
 		       globe.createPoints();
 
-			  	citiesArray = Object.values(cities);
+			  	citiesArray = Object.values($scope.cities);
 
 			  	
 			  	$scope.getCitySubs();
@@ -1449,22 +1626,25 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		    });
 	};
 	
-	$scope.getRoad = function(){
-		$http.get("data/road.do?year="+$scope.year)
+	$scope.getRoad = function(scenario){
+		$http.get("data/road.do?scenario="+scenario)
 	    .then(function(response) {
 	    	var lines = response.data;
 	    	lineCoord = [];
 			angular.forEach(lines,function(line){
-				if(cities[line.start] != undefined && cities[line.end] != undefined){
+				if($scope.cities[line.start] != undefined && $scope.cities[line.end] != undefined){
 
-					line.type ='road';
-					line.destinies = [{road:line,city:cities[line.start]},{road:line,city:cities[line.end]}];
-					line.forces = [];
-					
-					cities[line.start].destinies.push({road:line,city:cities[line.end]});
-					cities[line.end].destinies.push({road:line,city:cities[line.start]});
+					if($scope.cities[line.start].yn && $scope.cities[line.end].yn && $scope.cities[line.start].population > 0 && $scope.cities[line.end].population > 0){
+						line.type ='road';
+						line.destinies = [{road:line,city:$scope.cities[line.start]},{road:line,city:$scope.cities[line.end]}];
+						line.forces = [];
+						
+						$scope.cities[line.start].destinies.push({road:line,city:$scope.cities[line.end]});
+						$scope.cities[line.end].destinies.push({road:line,city:$scope.cities[line.start]});
 
-					lineCoord.push({start:cities[line.start],end:cities[line.end]});
+						lineCoord.push({start:$scope.cities[line.start],end:$scope.cities[line.end]});
+						
+					}
 				}
 		 	});
 			
@@ -1487,7 +1667,7 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 				$scope.factions[faction.id] = faction;
 		 	});
 			
-			$scope.getSnapshot();
+//			$scope.getSnapshot();
 	    	
 	    });
 		
@@ -1501,7 +1681,7 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 			angular.forEach(list,function(building){
 				
 				building.sub = [];
-				building.nameImage = {}
+				building.nameImage = {};
 				$scope.buildings[building.type] = building;
 		 	});
 			
@@ -1655,12 +1835,18 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 			angular.forEach(list,function(sub){
 				
 				var city = snapshotMap[sub.snapshot];
-				if(sub.type == 'hero'){
-					var id = parseInt(sub.value);
-					city.heroes[id] = {id:id,state:'garrisoned'};
-				}
-				if(sub.type == 'governer'){
-					city.governer = parseInt(sub.value);
+				if(city !=undefined){
+					city.sub.push(sub);
+					if(sub.type == 'hero'){
+						sub.value = parseInt(sub.value);
+						var id = sub.value;
+						city.heroes[id] = {id:id,state:'garrisoned'};
+					}
+					if(sub.type == 'governer'){
+						sub.value = parseInt(sub.value);
+
+						city.governer = sub.value;
+					}
 				}
 		 	});
 	    	
@@ -1691,6 +1877,79 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	    });		
 	}
 
+	
+	$scope.selectScenario = function(scenario){
+		$scope.selectedScenario=scenario;
+		
+		$scope.cities = {};
+		
+		$http.get("data/allScenarioSnapshot.do?scenario="+scenario.id)
+	    .then(function(response) {
+	    	
+	    	list = response.data;
+	    	data = [];
+		 	angular.forEach(list,function(city){
+		 		
+		 		var c = new City(city,$scope);
+		 		
+		 		$scope.cities[city.id] = c;
+		 		
+		 		
+		 		data.push(c)
+		 		
+		 		cityMap[city.id] = c;
+		 		snapshotMap[city.snapshot] = c;
+		 		
+		 		if($scope.factions[city.faction] != undefined && city.faction != 0){
+		 			$scope.factions[city.faction].cities.push(c);
+		 		}
+//				data = data.concat([city.latitude,city.longitude,city.population,city.faction]);
+		 	});
+		 	
+	       window.data = data;
+	       
+	       $scope.addData(scenario);
+	       
+	       
+	       
+	       globe.createPoints();
+
+		  	citiesArray = Object.values($scope.cities);
+
+		  	
+		  	
+		  	
+		  	//$scope.getCitySubs();
+		  	$scope.getSnapshotSubs();
+		  	//$scope.getRoad();
+		  	
+
+		  	
+		  	 
+	    });
+		
+	}
+	
+	$scope.addData = function(scenario){
+	
+		var data = [];
+
+		window.data.forEach(function(city){
+			if($scope.showUnuse || city.yn){
+				data.push(city);
+			}	
+		});
+		
+		globe.addData(data, {format: 'legend'});
+		
+       data.forEach(function(city){
+    	   if(city.object != undefined){
+	    	   objectMap[city.object.id] = city;	    		   
+    	   }
+       });
+       $scope.getRoad(scenario.id);
+		
+	}
 	
 	$scope.pause = function(){
 		$interval.cancel($scope.timer);
@@ -3039,6 +3298,8 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		
 //		startTimer();
 	}
+	
+	$scope.getScenario();
 	
 	$scope.getBuildings();
 	$scope.getWeapons();

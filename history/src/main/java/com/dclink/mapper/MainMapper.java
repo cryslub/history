@@ -2,16 +2,19 @@ package com.dclink.mapper;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import com.dclink.pojo.Building;
 import com.dclink.pojo.Candidate;
 import com.dclink.pojo.Council;
 import com.dclink.pojo.Election;
 import com.dclink.pojo.Faction;
+import com.dclink.pojo.Hero;
 import com.dclink.pojo.History;
 import com.dclink.pojo.Inspection;
 import com.dclink.pojo.Item;
@@ -19,9 +22,13 @@ import com.dclink.pojo.Party;
 import com.dclink.pojo.Person;
 import com.dclink.pojo.Rate;
 import com.dclink.pojo.Road;
+import com.dclink.pojo.Scenario;
 import com.dclink.pojo.Snapshot;
+import com.dclink.pojo.SoldierClass;
 import com.dclink.pojo.State;
 import com.dclink.pojo.Sub;
+import com.dclink.pojo.Trait;
+import com.dclink.pojo.Weapon;
 import com.dclink.pojo.Zone;
 
 @Mapper
@@ -191,8 +198,9 @@ public interface MainMapper {
 			+ " ")
 	public List<Snapshot> getSnapshot(@Param("year") int year);
 
-	@Select("select start,end from road where yn = 1")
-	public List<Road> getRoad();
+	@Select("select r.id,r.start,r.end from road r, scenarioRoad s "
+			+ " where r.id = s.road and s.scenario = #{scenario} ")
+	public List<Road> getRoads(@Param("scenario") int scenario);
 
 	@Select("select id,name from city")
 	public List<Snapshot> getCities();
@@ -203,7 +211,14 @@ public interface MainMapper {
 	@Select("select id,name,color from faction")
 	public List<Faction> getFaction();
 
-	@Select("select c.id, c.name,c.longitude, c.latitude, s.population, s.faction, f.color, s.soldiers "
+	@Insert("insert into faction (name,color) values (#{name},#{color})")
+	public void addFaction(Faction faction);
+
+	
+	@Update("update faction set name=#{name}, color=#{color} where id=#{id}")
+	public void editFaction(Faction faction);
+	
+	@Select("select c.id, c.name,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color, s.soldiers, s.id as snapshot "
 			+ "  from city c"
 			+ " inner join  snapshot s on c.id = s.city "
 			+ " inner join "
@@ -212,5 +227,132 @@ public interface MainMapper {
 			+ " where  s.population > 0 and c.yn = 1" 
 			+ " ")
 	public List<Snapshot> getScenarioSnapshot();
+	
 
+	
+	@Select("select * from snapshotSub")
+	public List<Sub> getSnapshotSubs();
+
+	
+	@Select("select c.id, c.name,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color, s.soldiers, s.id as snapshot, sc.yn, #{scenario} as scenario, m.year "
+			+ "  from city c"
+			+ " inner join  snapshot s on c.id = s.city "
+			+ " inner join "
+			+ " ( select max(s.year) as year, s.city from snapshot s , scenario sc where sc.year >= s.year  and sc.id = #{scenario} group by s.city ) m  on m.year = s.year and m.city = s.city "
+			+ " left outer join scenarioCity sc on sc.city = c.id and sc.scenario = #{scenario}  "
+			+ " left outer join faction f on f.id = s.faction "
+			+ " where  s.population > 0 " 
+			+ " ")
+	public List<Snapshot> getAllScenarioSnapshot(@Param("scenario") int scenario);
+
+	
+	
+	@Select("select * from building")
+	public List<Building> getBuildings();
+	
+	@Select("select * from trait")
+	public List<Trait> getTrait();
+	
+	@Select("select * from citySub")
+	public List<Sub> getCitySub();
+
+	@Insert("insert into citySub (city,  type, value1,value2) values ( #{city},#{type},#{value1},#{value2}) ")
+	public void addCitySubs(Sub sub);
+	
+	@Select("select * from buildingSub")
+	public List<Sub> getBuildingSub();
+
+	@Select("select * from weapon")
+	public List<Weapon> getWeapons();
+
+	@Select("select * from weaponSub")
+	public List<Sub> getWeaponSub();
+
+	
+	@Select("select * from soldierClass")
+	public List<SoldierClass> getSoldierClass();
+
+	@Select("select * from soldierClassSub")
+	public List<Sub> getSoldierClassSub();
+
+	@Select("select * from hero")
+	public List<Hero> getHeroes();
+
+	@Select("select * from heroSub")
+	public List<Sub> getHeroSubs();
+
+	@Select("select * from scenario")
+	public List<Scenario> getScenario();
+
+	@Select("select yn from scenarioCity  where city=#{id} and scenario = #{scenario}")	
+	public List<Boolean> getScenarioCity(Snapshot snapshot);
+	
+	@Insert("insert into scenarioCity (yn,city,scenario) values (#{yn},#{id},#{scenario})")
+	public void insertScenarioCity(Snapshot snapshot);
+
+	@Insert("insert into scenarioRoad (road,scenario) select id,#{scenario} from road where start=#{id} or end=#{id}")
+	public void insertScenarioRoad(Snapshot snapshot);
+
+	
+	@Update("update scenarioCity set yn = #{yn} where city=#{id} and scenario = #{scenario}")
+	public void setUses(Snapshot snapshot);
+
+	
+	@Update("update snapshot set faction = #{faction},population=#{population} where city=#{id} and year = #{year}")
+	public void setSnapshot(Snapshot snapshot);
+
+	@Insert("insert into snapshot (city,population,year,faction,soldiers) values (#{id},#{population},#{year},0,0)")
+	public void addSnapshot(Snapshot snapshot);
+
+	@Insert("insert into snapshotSub (snapshot,type,value) values (#{snapshot},'','')")
+	public void addSnapshotSub(Snapshot snapshot);
+
+	@Insert("update snapshotSub set type=#{type},value=#{value} where id=#{id}")
+	public void editSnapshotSub(Sub sub);
+
+	@Delete("delete from snapshotSub where id = #{id}")
+	public void removeSnapshotSub(int id);
+
+	@Insert("insert into hero (name,birth,valor,wisdom,authority) values(#{name},#{birth},#{valor},#{wisdom},#{authority})")
+	public void addHero(Hero hero);
+	
+	@Update("update hero set name=#{name},birth=#{birth},valor=#{valor},wisdom=#{wisdom},authority=#{authority} where id=#{id}")
+	public void editHero(Hero hero);
+
+	@Select("select * from snapshot where city=#{city}")
+	public List<Snapshot> getCitySnapshot(int city);
+
+	@Insert("insert into road (start,end,yn) values (#{start},#{end},1)")
+	public void addRoad(Road road);
+
+	@Delete("delete from road where id=#{id}")
+	public void removeRoad(int id);
+	
+	@Insert("insert into scenarioRoad (road,scenario) values ((select max(id) from road),#{scenario})")
+	public void addScenarioRoad(Road road);
+
+	@Insert("insert into scenarioRoad (road,scenario) values (#{id},#{scenario})")
+	public void addScenarioRoadWithId(Road road);
+	
+	@Select("select id from road where (start=#{start} and end=#{end}) or (start=#{end} and end=#{start})")
+	public List<Integer> getRoad(Road road);
+
+	@Insert("insert into scenario (name,year) values (#{name},#{year})")
+	public void addScenario(Scenario scenario);
+
+	@Insert("INSERT INTO scenarioCity (scenario,city) " + 
+			"SELECT (select max(id) from cryslub1.scenario),city " + 
+			"FROM scenarioCity where scenario=(select max(id)-1 from scenario)")
+	public void addScenarioCities();
+
+	@Insert("INSERT INTO cryslub1.scenarioRoad (scenario,road) " + 
+			"SELECT (select max(id) from cryslub1.scenario),road  " + 
+			"FROM cryslub1.scenarioRoad WHERE scenario = (select max(id)-1 from cryslub1.scenario)")
+	public void addScenarioRoads();
+
+
+
+
+	
+	
 }

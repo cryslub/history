@@ -5,6 +5,7 @@ public class Road {
 	int id;
 	int start;
 	int end;
+	int scenario;
 	
 	public int getId() {
 		return id;
@@ -23,6 +24,12 @@ public class Road {
 	}
 	public void setEnd(int end) {
 		this.end = end;
+	}
+	public int getScenario() {
+		return scenario;
+	}
+	public void setScenario(int scenario) {
+		this.scenario = scenario;
 	}
 	
 }

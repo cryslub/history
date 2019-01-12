@@ -31,60 +31,18 @@
 	</div>
 	<div ng-if="logged">
 		<input ng-model="cityName"/>
-		<select ng-model="cityId" ng-change="getSnapshot()">
+		<select ng-model="cityId" >
 			<option value="{{city.id}}" ng-repeat="city in cities | toArray:false  | filter : {'name':cityName}">{{city.id}}{{city.name}}</option>
 		</select>
 		
-		<button ng-click="getSnapshot(cityId)">snapshot</button>	
-				
 		<button ng-click="unuse(cityId)">unuse</button>	
 		<br/>
-		<div ng-repeat="snapshot in snapshots | toArray:false  | orderBy : 'year'">
-			{{snapshot.year}} {{snapshot.faction}} <input ng-model="snapshot.population" ng-change="changeSnapshot(snapshot)"/>
-		</div>		
-		
 		<input ng-model="type"/>
 		<input ng-model="value1"/>		
 		<input ng-model="value2"/>		
 		<button ng-click="sub(cityId,type,value1,value2)">Sub</button>	
 		
-		<br/>
-		
-		<select ng-model="factionId" ">
-			<option value="{{faction.id}}" ng-repeat="faction in factions">{{faction.id}}{{faction.name}}</option>
-		</select>
-		<br/>
-		<input ng-model="factions[factionId].name" ng-change="editFaction(factions[factionId])"/><input ng-model="factions[factionId].color"  ng-change="editFaction(factions[factionId])"/>
-		
-		<br/>
-		<input ng-model="name"/><input ng-model="color"/>
-		<button ng-click="addFaction(name,color)">add faction</button>	
-		
-		<br/>
-		<input ng-model="name"/><input ng-model="year"/>
-		<button ng-click="addScenario(name,year)">new scenario</button>	
-		<br/>
-		<input ng-model="name"/>
-		<input ng-model="birth"/>
-		<input ng-model="valor"/>
-		<input ng-model="wisdom"/>
-		<input ng-model="authority"/>
-		<button ng-click="add(name,birth,valor,wisdom,authority)">Add Hero</button>	
-		<br/>
-		
-		<br/>
-		
-		<input ng-model="heroName"/>
-		<select ng-model="heroId" ">
-			<option value="{{hero.id}}" ng-repeat="hero in heroes | toArray:false  | filter : {'name':heroName}">{{hero.id}}{{hero.name}}</option>
-		</select>
-		<br/>
-		<input ng-model="heroes[heroId].name" ng-change="editHero(heroes[heroId])"/>
-		<input ng-model="heroes[heroId].birth" ng-change="editHero(heroes[heroId])"/>
-		<input ng-model="heroes[heroId].valor" ng-change="editHero(heroes[heroId])"/>
-		<input ng-model="heroes[heroId].wisdom" ng-change="editHero(heroes[heroId])"/>
-		<input ng-model="heroes[heroId].authority" ng-change="editHero(heroes[heroId])"/>		
-
+				
 	</div>
 	
  </div>
@@ -95,9 +53,6 @@ app.controller('myCtrl', function($scope,$http) {
 	
 	$scope.party = {};
 	$scope.zone = {};
-	$scope.heroes={};
-	$scope.snapshots=[];
-	$scope.factions={};
 	
 	$http.get("data/elections.do")
     .then(function(response) {
@@ -105,25 +60,7 @@ app.controller('myCtrl', function($scope,$http) {
     });
 	
 
-	$scope.getHeroes = function(){
-		$http.get("data/hero.do")
-	    .then(function(response) {
-	    	var list = response.data;
-			angular.forEach(list,function(hero){
-				
-				hero.sub = [];
-				hero.nameImage = {};
-				$scope.heroes[hero.id] = hero;
-		 	});
-			
-	//		$scope.getHeroSubs();
-	    	
-	    });
-		
-	}
 
-	
-	
 	
 	
 	if(window.location.href.indexOf("localhost")>0){
@@ -149,19 +86,6 @@ app.controller('myCtrl', function($scope,$http) {
 	    });		
 	}
 
-	
-	$scope.add = function(name,birth,valor,wisdom,authority){
-		$http.post("data/hero.do",{
-			name:name,
-			birth:birth,
-			valor:valor,
-			wisdom:wisdom,
-			authority:authority
-		}).then(function(response) {
-	    });		
-	}
-
-	
 	$scope.getCities = function(){
 		$http.get("data/cities.do")
 	    .then(function(response) {
@@ -171,72 +95,6 @@ app.controller('myCtrl', function($scope,$http) {
 	        });
 	    });
 	}
-	
-
-	$scope.getSnapshot = function(id){
-		$http.get("data/city/snapshot.do?city="+id)
-	    .then(function(response) {
-	    	
-	    	var list = response.data;
-			$scope.snapshots = list;
-	//		$scope.getHeroSubs();
-	    	
-	    });
-		
-	}
-	
-	$scope.getFaction = function(){
-		$http.get("data/faction.do")
-	    .then(function(response) {
-	    	var list = response.data;
-			angular.forEach(list,function(faction){
-				
-				
-				$scope.factions[faction.id] = faction;
-		 	});
-			
-//			$scope.getSnapshot();
-	    	
-	    });
-		
-	}
-
-	$scope.addFaction = function(name,color){
-		$http.post("data/faction.do",{
-			name:name,
-			color:color
-		})
-	    .then(function(response) {
-	    	
-	    });
-		
-	}
-	$scope.editFaction = function(faction){
-		$http.put("data/faction.do",{
-			name:faction.name,
-			color:faction.color,
-			id:faction.id
-		})
-	    .then(function(response) {
-	    	
-	    });
-		
-	}
-	$scope.editHero = function(hero){
-		$http.put("data/hero.do",{
-			id:hero.id,
-			name:hero.name,
-			birth:hero.birth,
-			valor:hero.valor,
-			wisdom:hero.wisdom,
-			authority:hero.authority
-		})
-	    .then(function(response) {
-	    	
-	    });
-		
-	}
-	
 	
 	$scope.getParties = function(){
 
@@ -339,31 +197,8 @@ app.controller('myCtrl', function($scope,$http) {
 	    });
 	};
 
-	$scope.changeSnapshot = function(selected){
-		$http.put("data/snapshot.do",{
-			id:selected.city,
-			year:selected.year,
-			faction:selected.faction,
-			population:selected.population
-		}).then(function(){
-			
-		})		
-	}
 
-	$scope.addScenario = function(name,year){
-		$http.post("data/scenario.do",{
-			name:name,
-			year:year
-		}).then(function(response) {
-	    });		
-	}
-
-	
-	
-	
 	$scope.getCities();
-	$scope.getHeroes();
-	$scope.getFaction();
 //	$scope.getParties();
 // 	$scope.getInspections();
 

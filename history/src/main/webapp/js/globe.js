@@ -21,7 +21,7 @@ DAT.Globe = function(container, opts) {
     c.setHSL( ( 0.6 - ( x * 0.5 ) ), 1.0, 0.5 );
     return c;
   };
-  var imgDir = opts.imgDir || '/dclink/';
+  var imgDir = opts.imgDir || '/history/';
 
   
   var Shaders = {
@@ -176,7 +176,17 @@ DAT.Globe = function(container, opts) {
   }
 
   function addData(data, opts) {
-    var lat, lng, size, color, i, step, colorFnWrapper;
+ 
+	  
+	  if( this._baseGeometry != undefined){
+		  while (scene.children.length>1)
+		  {
+			  scene.remove(scene.children[1]);
+		  }
+		  
+	  }
+	  
+	  var lat, lng, size, color, i, step, colorFnWrapper;
 
     opts.animated = opts.animated || false;
     this.is_animated = opts.animated;
@@ -407,6 +417,10 @@ DAT.Globe = function(container, opts) {
 	  
   }
   
+  function distanceTo(object,target){
+	  return object.position.distanceTo(target.position);
+  }
+  
   function remove(object){
 	  scene.remove(object);
   }
@@ -586,7 +600,8 @@ DAT.Globe = function(container, opts) {
   this.createPoints = createPoints;
   this.renderer = renderer;
   this.scene = scene;
-
+  this.distanceTo = distanceTo;
+  
   return this;
 
 };

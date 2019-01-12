@@ -11,10 +11,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.dclink.mapper.MainMapper;
+import com.dclink.pojo.Building;
 import com.dclink.pojo.Candidate;
 import com.dclink.pojo.Council;
 import com.dclink.pojo.Election;
 import com.dclink.pojo.Faction;
+import com.dclink.pojo.Hero;
 import com.dclink.pojo.History;
 import com.dclink.pojo.Inspection;
 import com.dclink.pojo.Item;
@@ -22,9 +24,13 @@ import com.dclink.pojo.Party;
 import com.dclink.pojo.Person;
 import com.dclink.pojo.Rate;
 import com.dclink.pojo.Road;
+import com.dclink.pojo.Scenario;
 import com.dclink.pojo.Snapshot;
+import com.dclink.pojo.SoldierClass;
 import com.dclink.pojo.State;
 import com.dclink.pojo.Sub;
+import com.dclink.pojo.Trait;
+import com.dclink.pojo.Weapon;
 import com.dclink.pojo.Zone;
 
 @Controller
@@ -284,6 +290,78 @@ public class DataController {
 		
         return "";
     }
+
+	@RequestMapping(value="/use.do",method=RequestMethod.PUT)
+	public @ResponseBody String setUses(@RequestBody Snapshot snapshot) {
+		
+		List<Boolean> list = mainMapper.getScenarioCity(snapshot);
+		if(list.size()>0) {
+			mainMapper.setUses(snapshot);
+			
+		}else {
+			mainMapper.insertScenarioCity(snapshot);
+			mainMapper.insertScenarioRoad(snapshot);
+			
+		}
+		
+        return "";
+    }
+
+
+
+	
+	@RequestMapping(value="/snapshot.do",method=RequestMethod.PUT)
+	public @ResponseBody String setSnapshot(@RequestBody Snapshot snapshot) {
+		mainMapper.setSnapshot(snapshot);
+		
+        return "";
+    }
+
+	@RequestMapping(value="/snapshot.do",method=RequestMethod.POST)
+	public @ResponseBody String addSnapshot(@RequestBody Snapshot snapshot) {
+		mainMapper.addSnapshot(snapshot);
+		
+        return "";
+    }
+
+	@RequestMapping(value="/snapshot/sub.do",method=RequestMethod.POST)
+	public @ResponseBody String addSnapshotSub(@RequestBody Snapshot snapshot) {
+		mainMapper.addSnapshotSub(snapshot);
+		
+        return "";
+    }
+	
+	@RequestMapping(value="/snapshot/sub.do",method=RequestMethod.PUT)
+	public @ResponseBody String editSnapshotSub(@RequestBody Sub sub) {
+		mainMapper.editSnapshotSub(sub);
+		
+        return "";
+    }
+
+	@RequestMapping(value="/snapshot/sub.do",method=RequestMethod.DELETE)
+	public @ResponseBody String removeSnapshotSub(@RequestParam("id") int id) {
+		mainMapper.removeSnapshotSub(id);
+		
+        return "";
+    }
+
+	
+	@RequestMapping(value="/scenario.do",method=RequestMethod.GET)
+	public @ResponseBody List<Scenario> getScenario() {
+		List<Scenario> ret = mainMapper.getScenario();
+		
+        return ret;
+    }
+
+
+	@RequestMapping(value="/scenario.do",method=RequestMethod.POST)
+	public @ResponseBody void addScenario(@RequestBody Scenario scenario) {
+		mainMapper.addScenario(scenario);
+		mainMapper.addScenarioCities();
+		mainMapper.addScenarioRoads();
+
+    }
+
 	
 	
 	@RequestMapping(value="/snapshot.do",method=RequestMethod.GET)
@@ -293,6 +371,13 @@ public class DataController {
         return ret;
     }
 
+	@RequestMapping(value="/city/snapshot.do",method=RequestMethod.GET)
+	public @ResponseBody List<Snapshot> getCitySnapshot(@RequestParam("city") int city) {
+		List<Snapshot> list = mainMapper.getCitySnapshot(city);
+		
+        return list;
+    }
+	
 	@RequestMapping(value="/scenarioSnapshot.do",method=RequestMethod.GET)
 	public @ResponseBody List<Snapshot> getScenarioSnapshot() {
 		List<Snapshot> ret = mainMapper.getScenarioSnapshot();
@@ -300,13 +385,42 @@ public class DataController {
         return ret;
     }
 
-	
-	@RequestMapping(value="/road.do",method=RequestMethod.GET)
-	public @ResponseBody List<Road> getRoad() {
-		List<Road> ret = mainMapper.getRoad();
+	@RequestMapping(value="/allScenarioSnapshot.do",method=RequestMethod.GET)
+	public @ResponseBody List<Snapshot> getAllScenarioSnapshot(@RequestParam("scenario") int scenario) {
+		List<Snapshot> ret = mainMapper.getAllScenarioSnapshot(scenario);
 		
         return ret;
     }
+
+	
+	@RequestMapping(value="/road.do",method=RequestMethod.GET)
+	public @ResponseBody List<Road> getRoad(@RequestParam("scenario") int scenario) {
+		List<Road> ret = mainMapper.getRoads(scenario);
+		
+        return ret;
+    }
+
+	@RequestMapping(value="/road.do",method=RequestMethod.POST)
+	public @ResponseBody  void addRoad(@RequestBody Road road) {
+		
+		List<Integer> list = mainMapper.getRoad(road);
+		if(list.size() == 0) {			
+			mainMapper.addRoad(road);
+			mainMapper.addScenarioRoad(road);
+		}else {
+			road.setId(list.get(0));
+			mainMapper.addScenarioRoadWithId(road);			
+		}
+		
+    }
+
+	@RequestMapping(value="/road.do",method=RequestMethod.DELETE)
+	public @ResponseBody  void removeRoad(@RequestParam("id") int id) {
+		
+		mainMapper.removeRoad(id);
+		
+    }
+
 	
 	@RequestMapping("/cities.do")
 	public @ResponseBody List<Snapshot> cities() {
@@ -321,5 +435,117 @@ public class DataController {
 		
         return ret;
     }
+
+	@RequestMapping(value="/faction.do",method=RequestMethod.POST)
+	public @ResponseBody void addFaction(@RequestBody Faction faction) {
+		mainMapper.addFaction(faction);
+		
+    }
+
+	
+	@RequestMapping(value="/faction.do",method=RequestMethod.PUT)
+	public @ResponseBody void editFaction(@RequestBody Faction faction) {
+		mainMapper.editFaction(faction);
+		
+    }
+
+	
+	@RequestMapping(value="/building.do",method=RequestMethod.GET)
+	public @ResponseBody List<Building> getBuildings() {
+		List<Building> ret = mainMapper.getBuildings();
+		
+        return ret;
+    }
+
+	@RequestMapping(value="/trait.do",method=RequestMethod.GET)
+	public @ResponseBody List<Trait> getTraits() {
+		List<Trait> ret = mainMapper.getTrait();
+		
+        return ret;
+    }
+	
+	@RequestMapping(value="/city/sub.do",method=RequestMethod.GET)
+	public @ResponseBody List<Sub> getCitySubs() {
+		List<Sub> ret = mainMapper.getCitySub();
+		
+        return ret;
+    }
+
+	@RequestMapping(value="/snapshot/sub.do",method=RequestMethod.GET)
+	public @ResponseBody List<Sub> getSnapshotSubs() {
+		List<Sub> ret = mainMapper.getSnapshotSubs();
+		
+        return ret;
+    }
+
+	
+	
+	@RequestMapping(value="/city/sub.do",method=RequestMethod.POST)
+	public @ResponseBody void addCitySubs(@RequestBody Sub sub) {
+		mainMapper.addCitySubs(sub);
+    }
+
+	@RequestMapping(value="/building/sub.do",method=RequestMethod.GET)
+	public @ResponseBody List<Sub> getBuildingSubs() {
+		List<Sub> ret = mainMapper.getBuildingSub();
+		
+        return ret;
+    }	
+	
+	@RequestMapping(value="/weapon.do",method=RequestMethod.GET)
+	public @ResponseBody List<Weapon> getWeapons() {
+		List<Weapon> ret = mainMapper.getWeapons();
+		
+        return ret;
+    }
+
+	@RequestMapping(value="/weapon/sub.do",method=RequestMethod.GET)
+	public @ResponseBody List<Sub> getWeaponSub() {
+		List<Sub> ret = mainMapper.getWeaponSub();
+		
+        return ret;
+    }
+
+	
+	@RequestMapping(value="/soldierClass.do",method=RequestMethod.GET)
+	public @ResponseBody List<SoldierClass> getSoldierClass() {
+		List<SoldierClass> ret = mainMapper.getSoldierClass();
+		
+        return ret;
+    }
+	
+	@RequestMapping(value="/soldierClassSub.do",method=RequestMethod.GET)
+	public @ResponseBody List<Sub> getSoldierClassSub() {
+		List<Sub> ret = mainMapper.getSoldierClassSub();
+		
+        return ret;
+    }
+	
+	@RequestMapping(value="/hero.do",method=RequestMethod.GET)
+	public @ResponseBody List<Hero> getHeroes() {
+		List<Hero> ret = mainMapper.getHeroes();
+		
+        return ret;
+    }
+
+	@RequestMapping(value="/hero.do",method=RequestMethod.POST)
+	public @ResponseBody void addHero(@RequestBody Hero hero) {
+		mainMapper.addHero(hero);
+    }
+
+	@RequestMapping(value="/hero.do",method=RequestMethod.PUT)
+	public @ResponseBody void editHero(@RequestBody Hero hero) {
+		mainMapper.editHero(hero);
+    }
+
+
+	
+	@RequestMapping(value="/hero/sub.do",method=RequestMethod.GET)
+	public @ResponseBody List<Sub> getHeroSubs() {
+		List<Sub> ret = mainMapper.getHeroSubs();
+		
+        return ret;
+    }
+	
 	
 }

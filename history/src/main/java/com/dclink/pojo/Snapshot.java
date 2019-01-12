@@ -10,6 +10,12 @@ public class Snapshot {
 	int faction;
 	String color;
 	int soldiers;
+	String originalName;
+	int snapshot;
+	boolean yn;
+	int scenario;
+	int year;
+	int city;
 	
 	
 	public String getId() {
@@ -59,6 +65,42 @@ public class Snapshot {
 	}
 	public void setSoldiers(int soldiers) {
 		this.soldiers = soldiers;
+	}
+	public String getOriginalName() {
+		return originalName;
+	}
+	public void setOriginalName(String originalName) {
+		this.originalName = originalName;
+	}
+	public int getSnapshot() {
+		return snapshot;
+	}
+	public void setSnapshot(int snapshot) {
+		this.snapshot = snapshot;
+	}
+	public boolean isYn() {
+		return yn;
+	}
+	public void setYn(boolean yn) {
+		this.yn = yn;
+	}
+	public int getScenario() {
+		return scenario;
+	}
+	public void setScenario(int scenario) {
+		this.scenario = scenario;
+	}
+	public int getYear() {
+		return year;
+	}
+	public void setYear(int year) {
+		this.year = year;
+	}
+	public int getCity() {
+		return city;
+	}
+	public void setCity(int city) {
+		this.city = city;
 	}
 	
 	

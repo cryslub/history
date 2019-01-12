@@ -15,6 +15,11 @@ public class MainController {
 	public String game() {
         return "game";
     }
+
+	@RequestMapping("/scenario.do")
+	public String scenario() {
+        return "scenario";
+    }
 	
 	@RequestMapping("/admin.do")
 	public String admin() {
