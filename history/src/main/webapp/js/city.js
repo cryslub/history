@@ -10,18 +10,21 @@ class City{
 
 		this.id = city.id;
 		this.yn = city.yn;
+		this.cityType = city.type;
 
 		this.snapshot = city.snapshot;
 		this.year = city.year;
 		this.scenario = city.scenario;
 		this.color = city.color;
 		this.faction = city.faction;
+		this.factionData = $scope.factions[city.faction];
 		this.soldiers = city.soldiers;
 		this.population = city.population;
 		this.latitude = city.latitude;
 		this.longitude = city.longitude;
 		this.name = city.name;
 		this.originalName = city.originalName;
+		this.labelPosition = city.labelPosition;
 		this.type = 'city';
 		
 		this.mans = Math.floor(this.population/10);

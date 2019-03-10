@@ -10,6 +10,7 @@ public class Sub {
 	int state;
 	int party;
 	int person;
+	int road;
 	
 	int city;
 	int snapshot;
@@ -68,6 +69,15 @@ public class Sub {
 	}
 	public void setPerson(int person) {
 		this.person = person;
+	}
+	
+	
+	
+	public int getRoad() {
+		return road;
+	}
+	public void setRoad(int road) {
+		this.road = road;
 	}
 	public int getCity() {
 		return city;

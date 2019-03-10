@@ -28,14 +28,31 @@
   <script type="text/javascript" src="js/Detector.js"></script>
 <!--   <script type="text/javascript" src="js/three.min.js"></script> -->
   <script type="text/javascript" src="js/Tween.js"></script>
+  <script type="text/javascript" src="js/threeGeoJson.js"></script>
+
+  <script type="text/javascript" src="js/earcut.js"></script>
+
   <script type="text/javascript" src="js/globe.js"></script>
   <script type="text/javascript" src="js/city.js"></script>
+
+  <script type="text/javascript" src="js/topojson-client.js"></script>
+  <script type="text/javascript" src="js/d3-array.min.js"></script>
+  <script type="text/javascript" src="js/d3-collection.min.js"></script>
+  <script type="text/javascript" src="js/d3-dispatch.min.js"></script>
+  <script type="text/javascript" src="js/d3-request.js"></script>
+  <script type="text/javascript" src="js/d3-timer.min.js"></script>
+
+
 
 <style>
  html {
         height: 100%;
       }
-body { margin: 0; }
+body { 
+	margin: 0;
+	overflow-y:hidden;
+    overflow-x: hidden;
+}
 //	canvas { width: 100%; height: 100% }
 
 .others .operate{display:none;}
@@ -44,12 +61,18 @@ body { margin: 0; }
    width: 300px;
    position: absolute;
    left: 20px;
-   top: 33px;
+   top: 0px;
 
    background-color: rgba(0,0,0,0.2);
 
    border-top: 1px solid rgba(255,255,255,0.4);
    padding: 10px;
+   height:99%;
+ }
+ 
+ #currentInfo .list-group{
+	 height: 100%;
+    overflow-y: auto;
  }
 
  .year {
@@ -90,7 +113,35 @@ body { margin: 0; }
   margin-left: -5px !important;
 
 }
+.text-label {
+    font-family: "Segoe UI", "Source Sans Pro", Calibri, Candara, Arial, sans-serif;
+  color: #fff;
+  margin: 10px 0 0 -50px;
+  pointer-events:none;
+   text-shadow: 1px 1px #000000;
+	width:100px;
+	
+	text-align:center;
+	line-height:12px;
+}
 
+.text-detail{
+	 font-family: "Segoe UI", "Source Sans Pro", Calibri, Candara, Arial, sans-serif;
+	// background-color: rgba(0,0,0,0.5);
+	z-index:10;
+	  color: #fff;
+  margin: -50px 0 0 15px;
+	
+	
+	padding:10px;
+	border:1px solid #111111;
+}
+.text-hide{
+	visibility: hidden;	 
+}
+.label-top{
+ 	margin: -25px 0 0 -50px;
+}
 
 </style>
 
@@ -115,16 +166,17 @@ body { margin: 0; }
 		  	<br/>
 
 			<div class="list-group">
-			  <a href="#" class="list-group-item" ng-class="{'active':scenario.id==selectedScenario.id}" ng-repeat="scenario in scenarios" ng-click="selectScenario(scenario)">{{scenario.name}}</a>
+			  <a href="#" class="list-group-item" ng-class="{'active':scenario.id==selectedScenario.id}" ng-repeat="scenario in scenarios | filter:{yn:true}| orderBy:'-year'" ng-click="selectScenario(scenario)">{{scenario.name}}</a>
 			</div>
 
 		  </div>
+
 
 		<div class="modal fade" id="city" tabindex="-1" role="dialog">
 			<div class="modal-dialog " role="document">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h4 class="modal-title">{{selected.name}} </h4>
+						<h4 class="modal-title"><input ng-model="selected.name" ng-change="changeSnapshot(selected)"/> </h4>
 						<h5 class="modal-title">
 							 <table style="display:inline-block;margin-left:3px;    border-spacing: 0;">
 							 	<tr>
@@ -142,8 +194,6 @@ body { margin: 0; }
 								<span class="badge ng-binding" ng-style="{'color':'white','background-color': factions[selected.faction].color}" title="Faction">
 									{{factions[selected.faction].name}}
 								</span>
-								<select ng-change="changeSnapshot(selected)" ng-model="selected.faction" ng-options="faction.id as faction.name for faction in factions">
-								</select> 
 								
 								
 								<small class="text-muted" title="Population"> <small><span class="glyphicon glyphicon-user"> </span></small> {{selected.population|number}}</small>
@@ -161,6 +211,18 @@ body { margin: 0; }
 							<div class="carousel-inner">
 							    <div class="carousel-item active">
 									<div class="container">
+										<div class="row">
+											<div class="col-sm">
+												<input ng-model="factionName"/>	
+												<select ng-change="changeSnapshot(selected)" ng-model="selected.faction" 
+													ng-options="faction.id as faction.name for faction in factions | toArray:false  | filter : {'name':factionName}">
+												</select> 
+											
+												<input ng-change="changeCity(selected)" ng-model="selected.cityType"/>
+												<select ng-change="changeCity(selected)" ng-model="selected.labelPosition"><option>bottom</option><option>top</option></select>
+												<input ng-change="changeCity(selected)" ng-model="selected.latitude"/> <input ng-change="changeCity(selected)" ng-model="selected.longitude"/>
+											</div>
+										</div>
 										<div class="row">
 											<div class="col-sm">	
 												 <div class="form-check">
@@ -233,9 +295,18 @@ body { margin: 0; }
 								    	<div class="row">
 											<div class="col-sm">	    
 												<div ng-repeat="destiny in selected.destinies">
-												{{destiny.city.name}} <button class="btn btn-primary btn-xs" ng-click="removeRoad(destiny)">Remove</button>		
+												{{destiny.road.id}} {{destiny.road.destinies[0].city.name}} - {{destiny.road.destinies[1].city.name}} 
+												
+												<select ng-model="destiny.road.type" ng-change="changeRoad(destiny.road)"><option>normal</option><option>water</option><option>high</option></select>
+												<input ng-model="destiny.road.waypoint" ng-change="changeRoad(destiny.road)"/>
+												<button class="btn btn-primary btn-xs" ng-click="removeRoad(destiny)">Remove</button>		
 												</div>
-												<button class="btn btn-primary btn-xs" href="#city-body"   data-slide="next" ng-click="stat='road'">Add Road</button>												
+												<input ng-model="cityName"/>
+												<select ng-model="cityId"
+													ng-options="city.id as city.name for city in cities  | toArray:false  | filter : {'name':cityName}">
+												</select>
+												
+												<button class="btn btn-primary btn-xs"  ng-click="addRoad(selected,cityId)">Add Road</button>												
 											</div>
 								    	</div>
 								    	<hr/>
@@ -1343,6 +1414,8 @@ var app = angular.module('myApp', ['angular-toArrayFilter','ui.bootstrap']);
 app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 
 
+	var roads;
+	
 	$scope.cities = {};
 	$scope.stat='default';
 
@@ -1392,11 +1465,13 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	 }]
 	 
 	 var objectMap = {};
+	 var objects =[];
 	 var forceMap = {};
 	 
 	 var citiesArray = Object.values($scope.cities);
 	 var cityMap = {};
 	 var snapshotMap = {};
+	 var roadMap = {};
 	 
 	 var globe = DAT.Globe(document.getElementById('container'), {
 		 colorFn:function(label) {
@@ -1408,41 +1483,18 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		      0xe6b23a, 0x7ed3f7][label]);
 		  },  
 	 	onClick: function(event,camera,scene){
-//	 		  console.log(event);
-
-	 		  
-	 		  var mouse = new THREE.Vector2();
-	 		  
-	 		  mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-	 		  mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-	 		  
-	 		  var raycaster = new THREE.Raycaster();
-	 		  raycaster.setFromCamera( mouse, camera );
-	 		  
-	 		  var array  = [];
-	 		 scene.children.forEach(function(child){
-	 			if(child.type=='Mesh'){
-	 				array.push(child);
-	 			} 
-	 		 });
-	 		  
-	 		  var intersects = raycaster.intersectObjects( array );
-	 		
-	 		 $scope.clicked = [];
-	 		 intersects.forEach( function(intersect){
-	 		 	if(objectMap[intersect.object.id] != undefined){
-	 		 		$scope.clicked.push(objectMap[intersect.object.id]);
-	 		 	}
-	 		 });
 	 		 
-	 		 
-	 		 if($scope.clicked.length>0){
-	 			 
+	 		var mouse = new THREE.Vector2();
+			  
+			  mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+			  mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+			  
+	 		getSelected(mouse,camera,scene,function(clicked,selected){
 	 			 $('#city-body').carousel(0);
 	 			 $('#force-body').carousel(0);
 
-	 			if($scope.clicked.length==1){
-	 				$scope.selected =objectMap[intersects[0].object.id];
+	 			if(clicked.length==1){
+	 				$scope.selected =selected;
 	 				
 	 				if($scope.selected != undefined){
 
@@ -1462,10 +1514,48 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	 				 
 	 				$scope.$apply();
 	 			}
-	 		 }
-	 	  }
+	 			
+	 		});
+	 	  },
+	 	  
+	 	 onMouseover : function(mouse,camera,scene){
+	 		var ret = getSelected(mouse,camera,scene,function(clicked,selected){
+	 			globe.detail(selected,$filter);
+	 		});
+	 		if(ret == false){
+	 			globe.detail();
+	 		}
+	 	 }
 			
 	 });
+	 
+	 
+	 function getSelected(mouse,camera,scene,callback){
+		 
+		  
+		  var raycaster = new THREE.Raycaster();
+		  raycaster.setFromCamera( mouse, camera );
+		  
+		  var intersects = raycaster.intersectObjects( objects );
+		
+		 $scope.clicked = [];
+	//	 console.log(intersects.length);
+		 intersects.forEach( function(intersect){
+		 	if(objectMap[intersect.object.id] != undefined){
+		 		$scope.clicked.push(objectMap[intersect.object.id]);
+		 	}
+		 });
+		 
+		 
+		 if($scope.clicked.length>0){
+			 
+			 callback($scope.clicked,objectMap[intersects[0].object.id]);
+			 
+			 return true;
+		 }
+		 
+		 return false;
+	 }
 
 	 var lineCoord = [];
 	 
@@ -1475,7 +1565,7 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	$scope.addRoad = function(selected,city){
 		$http.post("data/road.do",{
 			start:selected.id,
-			end:city.id,
+			end:city,
 			scenario:$scope.selectedScenario.id
 		}).then(function(response) {
 	//    	$scope.addScenarioRoad();
@@ -1485,7 +1575,7 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 
 
 	$scope.removeRoad = function(destiny){
-		$http.delete("data/road.do?id="+destiny.road.id).then(function(response) {
+		$http.delete("data/scenario/road.do?id="+destiny.road.id).then(function(response) {
 	//    	$scope.addScenarioRoad();
 //	    	$("#scenario").modal();
 	    });
@@ -1527,14 +1617,38 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	$scope.changeSnapshot = function(selected){
 		$http.put("data/snapshot.do",{
 			faction:selected.faction,
-			id:selected.id,
+			snapshot:selected.snapshot,
 			year:selected.year,
-			population:selected.population
+			population:selected.population,
+			name:selected.name
+		}).then(function(){
+			
+		})		
+	}
+	
+	$scope.changeCity = function(selected){
+		$http.put("data/city.do",{
+			id:selected.id,
+			longitude:selected.longitude,
+			latitude:selected.latitude,
+			type:selected.cityType,
+			labelPosition:selected.labelPosition
 		}).then(function(){
 			
 		})		
 	}
 
+	$scope.changeRoad = function(road){
+		$http.put("data/road.do",{
+			id:road.road,
+			waypoint:road.waypoint,
+			type:road.type
+		}).then(function(){
+			
+		})		
+	}
+
+	
 	$scope.changeSnapshotSub = function(sub){
 		$http.put("data/snapshot/sub.do",{
 			id:sub.id,
@@ -1561,7 +1675,8 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		$http.post("data/snapshot.do",{
 			id:selected.id,
 			population:selected.population,
-			year:$scope.selectedScenario.year
+			year:$scope.selectedScenario.year,
+			name:selected.name
 		}).then(function(){
 			
 		})		
@@ -1612,7 +1727,9 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		    	   objectMap[city.object.id] = city;
 		       });
 		       
-		       globe.createPoints();
+		       
+		       
+		    //   globe.createPoints();
 
 			  	citiesArray = Object.values($scope.cities);
 
@@ -1629,30 +1746,64 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	$scope.getRoad = function(scenario){
 		$http.get("data/road.do?scenario="+scenario)
 	    .then(function(response) {
+	    	
+	    	roadMap = {};
+	    	
 	    	var lines = response.data;
-	    	lineCoord = [];
 			angular.forEach(lines,function(line){
+				
+				roadMap[line.id] = line;
+		 	});
+			
+			
+			$scope.getRoadSubs ();
+	    	
+	    });
+		
+	}
+	
+	$scope.getRoadSubs = function(){
+		$http.get("data/road/sub.do")
+	    .then(function(response) {
+	    	var list = response.data;
+			angular.forEach(list,function(sub){
+				
+				var road = roadMap[sub.road];
+				if(sub.type == 'waypoint'){
+				//	road.
+				}
+		 	});
+			
+			
+	    	lineCoord = [];
+			angular.forEach(roadMap,function(line){
+				
+				if(line.waypoint != ""){
+					var a = 0;
+				}
 				if($scope.cities[line.start] != undefined && $scope.cities[line.end] != undefined){
 
-					if($scope.cities[line.start].yn && $scope.cities[line.end].yn && $scope.cities[line.start].population > 0 && $scope.cities[line.end].population > 0){
-						line.type ='road';
+					if($scope.cities[line.start].yn && $scope.cities[line.end].yn){
+//						line.type ='road';
 						line.destinies = [{road:line,city:$scope.cities[line.start]},{road:line,city:$scope.cities[line.end]}];
 						line.forces = [];
 						
 						$scope.cities[line.start].destinies.push({road:line,city:$scope.cities[line.end]});
 						$scope.cities[line.end].destinies.push({road:line,city:$scope.cities[line.start]});
 
-						lineCoord.push({start:$scope.cities[line.start],end:$scope.cities[line.end]});
+						lineCoord.push({start:$scope.cities[line.start],end:$scope.cities[line.end],waypoint:line.waypoint,type:line.type});
 						
 					}
 				}
 		 	});
 			
-			globe.addLines(lineCoord);
+			roads = globe.addLines(lineCoord);
+
 	    	
-	    });
-		
+	    });		
 	}
+
+	
 	
 	$scope.getFaction = function(){
 		$http.get("data/faction.do")
@@ -1908,11 +2059,14 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		 	
 	       window.data = data;
 	       
+	       
+	       
+	       
 	       $scope.addData(scenario);
 	       
 	       
 	       
-	       globe.createPoints();
+	//       globe.createPoints();
 
 		  	citiesArray = Object.values($scope.cities);
 
@@ -1934,7 +2088,15 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	
 		var data = [];
 
+		if(roads != undefined){
+			globe.remove(roads);						
+		}
+		angular.forEach(objectMap,function(city){
+			globe.remove(city.object);			
+		});
+		
 		window.data.forEach(function(city){
+			
 			if($scope.showUnuse || city.yn){
 				data.push(city);
 			}	
@@ -1942,12 +2104,15 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		
 		globe.addData(data, {format: 'legend'});
 		
+		objects = [];
        data.forEach(function(city){
     	   if(city.object != undefined){
 	    	   objectMap[city.object.id] = city;	    		   
+	    	   objects.push(city.object);
     	   }
        });
        $scope.getRoad(scenario.id);
+       
 		
 	}
 	

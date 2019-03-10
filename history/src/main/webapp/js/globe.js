@@ -86,6 +86,11 @@ DAT.Globe = function(container, opts) {
   var padding = 40;
   var PI_HALF = Math.PI / 2;
 
+  var radius = 200;
+  
+  var textlabels = [];
+  var detailHtml;
+  
   function init() {
 
     container.style.color = '#fff';
@@ -100,20 +105,22 @@ DAT.Globe = function(container, opts) {
 
     scene = new THREE.Scene();
 
-    var geometry = new THREE.SphereGeometry(200, 40, 30);
+    var geometry = new THREE.SphereGeometry(199, 40, 30);
 
     shader = Shaders['earth'];
     uniforms = THREE.UniformsUtils.clone(shader.uniforms);
 
-    uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir+'world.jpg');
+//    uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir+'world.jpg');
 
-    material = new THREE.ShaderMaterial({
-
-          uniforms: uniforms,
-          vertexShader: shader.vertexShader,
-          fragmentShader: shader.fragmentShader
-
-        });
+    var water =0x4B76C0;
+    material =  new THREE.MeshBasicMaterial( {color: water} );
+//    material = new THREE.ShaderMaterial({
+//
+//          uniforms: uniforms,
+//          vertexShader: shader.vertexShader,
+//          fragmentShader: shader.fragmentShader
+//
+//        });
 
     mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.y = Math.PI;
@@ -135,7 +142,7 @@ DAT.Globe = function(container, opts) {
 
     mesh = new THREE.Mesh(geometry, material);
     mesh.scale.set( 1.1, 1.1, 1.1 );
-    scene.add(mesh);
+//    scene.add(mesh);
 
     geometry = new THREE.BoxGeometry(0.75, 0.75, 1);
     geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0,-0.5));
@@ -161,8 +168,9 @@ DAT.Globe = function(container, opts) {
 
     window.addEventListener('mousemove', onTouchMove, false);
     
-    container.addEventListener('mouseover', function() {
+    container.addEventListener('mouseover', function(event) {
       overRenderer = true;
+      
     }, false);
 
     container.addEventListener('mouseout', function() {
@@ -173,16 +181,470 @@ DAT.Globe = function(container, opts) {
     light.position.z = 300;
     scene.add( light );
     
+    
+    
+    
+    var arr = [{
+    	file:"json/rivers_simplify.json",
+    	color:water,
+    	radius:200.1
+    },
+    {
+    	file:"json/reefs.json",
+    	color:0x63ABC1,
+    	radius:200.1
+    }];
+    
+    
+    arr.forEach(function(item){
+        d3.json(item.file, function(error, data) {
+        	  if (error) throw error;
+//        	  scene.add(graticule = wireframe(graticule10(), new THREE.LineBasicMaterial({color: 0xaaaaaa})));
+//        	  scene.add(mesh = wireframe(topojson.mesh(topology, topology), new THREE.LineBasicMaterial({color: 0x4682B4})));
+
+        	  var geo = new THREE.Geometry;
+
+        	  data.geometries.forEach(function(geometry) {
+        		  
+        		  if(geometry.type == 'LineString'){
+        			  drawLines(geo,geometry.coordinates);
+        		  }
+        		  
+        		  if(geometry.type == 'MultiLineString'){
+        			geometry.coordinates.forEach(function(coordinates){
+          			  drawLines(geo,coordinates);  				
+        			});
+        		  }
+      	  });
+      		  
+      		  
+      		scene.add( new THREE.LineSegments(geo, new THREE.LineBasicMaterial({color: item.color})));
+
+        	});
+    });
+
+
+    
+   
+    
+    
+
+	var materials = [
+		  new THREE.MeshBasicMaterial({
+		        color: 0x9F907A,
+		        morphTargets: false,
+		        side: THREE.DoubleSide
+		      }),
+		      
+		new THREE.MeshBasicMaterial({
+	        color: 0x0F5C0F,
+	        morphTargets: false,
+	        side: THREE.DoubleSide
+	      }),
+      new THREE.MeshBasicMaterial({  //desert
+	        color: 0xFFE99E,
+	        morphTargets: false,
+	        side: THREE.DoubleSide
+	      }),
+      new THREE.MeshBasicMaterial({ //stone
+	        color: 0x9F907A,
+	        morphTargets: false,
+	        side: THREE.DoubleSide
+	      }),
+    
+      new THREE.MeshBasicMaterial({
+	        color: 0x297229,
+	        morphTargets: false,
+	        side: THREE.DoubleSide
+	      }),
+      new THREE.MeshBasicMaterial({
+	        color: 0x9E8C5B,
+	        morphTargets: false,
+	        side: THREE.DoubleSide
+	      }),
+      new THREE.MeshBasicMaterial({
+	        color: 0x665147,
+	        morphTargets: false,
+	        side: THREE.DoubleSide
+	      }),
+      new THREE.MeshBasicMaterial({
+	        color: 0xFFE6B3,
+	        morphTargets: false,
+	        side: THREE.DoubleSide
+	      }),
+      new THREE.MeshBasicMaterial({ ////dry grassland
+	        color: 0x74896C,
+	        morphTargets: false,
+	        side: THREE.DoubleSide
+	      }),
+      new THREE.MeshBasicMaterial({
+	        color: 0xffffff,
+	        morphTargets: false,
+	        side: THREE.DoubleSide
+	      }),
+      new THREE.MeshBasicMaterial({ // thick forest
+	        color: 0x0D490D,
+	        morphTargets: false,
+	        side: THREE.DoubleSide
+	      })
+
+	]
+
+	var map =[
+		0,
+		1,
+		4,
+		6,
+		4,
+		3,
+		1,
+		4,
+		5,
+		5,
+		5,
+		3,
+		4,
+		2,
+		3
+	]
+	
+    $.getJSON("json/wwf_terr_ecos.json", function(data) {
+
+    		var geo = new THREE.Geometry();
+	 		var material =  new THREE.MeshBasicMaterial({
+	 	        color: 0xaaaaaa,
+	 	        morphTargets: false,
+	 	        side: THREE.DoubleSide
+	 	      });
+	 		
+	    	data.features.forEach(function(feature){
+				if(feature.geometry != null){
+					if(feature.geometry.coordinates != undefined){
+						if(feature.geometry.coordinates.length>0){
+							var color = 1;
+							if(feature.properties != undefined){
+								
+								color = map[feature.properties.BIOME];
+								
+							}
+							
+							if(feature.properties.BIOME==13){
+								if(feature.properties.GBL_STAT == 1){
+//									console.log(feature.properties);
+									color=7;
+									if(feature.properties.G200_STAT  ==2){
+										color = 3;
+									}
+								}
+								if(feature.properties.GBL_STAT == 2){
+//									console.log(feature.properties);
+									if(feature.properties.G200_STAT  ==3){
+										color = 7;
+									}
+								}
+								if(feature.properties.GBL_STAT == 3){
+//									console.log(feature.properties);
+									color=3;
+
+								}
+								
+								if(feature.properties.ECO_NUM == 1){
+//									console.log(feature.properties);
+									color=8;
+
+								}
+								if(feature.properties.ECO_NUM == 3){
+//									console.log(feature.properties);
+									color=2;
+
+								}
+								
+
+							}
+							if(feature.properties.BIOME==4){
+								if(feature.properties.GBL_STAT == 1){
+									//console.log(feature.properties);
+									if(feature.properties.G200_STAT  ==1){
+										color=1;
+									}
+
+								}
+								if(feature.properties.GBL_STAT == 2){
+									color=8;
+									
+								}
+								if(feature.properties.GBL_STAT == 3){
+									color=10;
+									
+								}
+								
+							}
+							if(feature.geometry.type == 'Polygon'){
+								drawCoordinate(geo,feature.geometry.coordinates,200,color);
+							}
+							if(feature.geometry.type == 'MultiPolygon'){
+								feature.geometry.coordinates.forEach(function(coordinate){
+									drawCoordinate(geo,coordinate,200,color);
+								
+								});
+							}
+						}
+					}
+				}
+			}); 
+	    	
+	    	var m = new THREE.Mesh( geo, materials );
+	      	
+			scene.add(  m);
+      });
+    
+   
+	 var jsons = [{
+	    	file:"json/lakes.json",
+	    	color:water,
+	    	radius:200.1
+	    },{
+	    	file:"json/ocean.json",
+	    	color:water,
+	    	radius:200.1
+	    },{
+	    	file:"json/glaciated.json",
+	    	color:0xEFF4FF,
+	    	radius:200.05
+	    },{
+	    	file:"json/playas.json",
+	    	color:0xffffff,
+	    	radius:200.1
+	    },{
+	    	file:"json/bathymetry_K_200.json",
+	    	color:0x1A448B,
+	    	radius:200.2
+	    }];
+	    
+	    jsons.forEach(function(json){
+	        $.getJSON(json.file, function(data) {
+
+	        	drawGeoJson(json.color,data,json.radius);
+	    		  
+	        });
+	    	
+	    });
+    
+//    $.getJSON("json/ocean.json", function(data) {
+
+//    	drawGeoJson(0x1E90FF,data);
+		  
+//    });
+		
+  }
+  
+  
+  function drawLines(geo,coordinates){
+	  for(var i = 0 ; i<coordinates.length; i++){
+		  if(i>0){
+		      geo.vertices.push(vertex(coordinates[i-1]), vertex(coordinates[i]));
+		  }  				  
+	  }
+  }
+  
+  function drawGeoJson(color,data,radius){
+
+	  var geo = new THREE.Geometry();
+		var material =  new THREE.MeshBasicMaterial({
+	        color: color,
+	        morphTargets: false,
+	        side: THREE.DoubleSide
+	      });
+
+		
+		if(data.type=="GeometryCollection"){
+		
+		  	data.geometries.forEach(function(geometry){
+		  		
+		  		if(geometry.type=='MultiPolygon'){
+		  			geometry.coordinates.forEach(function(coordinate){
+		  				drawCoordinate(geo,coordinate,radius);
+		  			});
+		  		}else{
+		  			
+		  			drawCoordinate(geo,geometry.coordinates,radius);
+		  		
+	
+		  		}
+		  		
+		  	});
+		}
+		
+	
+	
+	  	var m = new THREE.Mesh( geo, material );
+  	
+		scene.add(  m);
   }
 
+  
+  function drawCoordinate(geo,coordinate,radius,color){
+		var d = earcut.flatten(coordinate);
+  		var triangles = earcut(d.vertices, d.holes, d.dimensions);
+  		
+  		
+  		var i = 0;
+
+  		for(;i<triangles.length;i+=3){
+
+
+  			//create a triangular geometry
+  			var pointA = new THREE.Vector3(d.vertices[triangles[i]*2],d.vertices[triangles[i]*2+1],0);
+  			var pointB = new THREE.Vector3(d.vertices[triangles[i+1]*2],d.vertices[triangles[i+1]*2+1],0);
+  			var pointC = new THREE.Vector3(d.vertices[triangles[i+2]*2],d.vertices[triangles[i+2]*2+1]);
+  			
+  			makeFace(geo,pointA,pointB,pointC,radius,color);
+  			
+  		}
+  		
+
+  }
+  
+  function makeFace(geo,pointA,pointB,pointC,radius,color){
+	  
+		var max =2;
+
+		
+	   var arr = [{
+		   distance:pointA.distanceTo( pointB ),
+		   point1:pointA,
+		   point2:pointB,
+		   point3:pointC		   
+	   },{
+		   distance:pointA.distanceTo( pointC ),
+		   point1:pointA,
+		   point2:pointC,
+		   point3:pointB		   
+	   },{
+		   distance:pointB.distanceTo( pointC ),
+		   point1:pointB,
+		   point2:pointC,
+		   point3:pointA		   
+	   }]
+	  
+	   arr.sort(function (a, b) {
+		  return b.distance - a.distance;
+		});
+	   
+	   
+	   if(arr[0].distance > max){
+		   
+		   var a = arr[0];
+		   
+			var dir = new THREE.Vector3();
+			
+			  dir.subVectors( a.point1, a.point2 ).normalize();
+					  
+			  dir.multiplyScalar(a.distance/2);
+			  
+			  var mid = new THREE.Vector3(a.point2.x,a.point2.y,a.point2.z);
+			  
+			  mid.add(dir);
+			  
+			  makeFace(geo,a.point1,a.point3,mid,radius,color);
+			  makeFace(geo,a.point2,a.point3,mid,radius,color);	
+	   }
+	   
+	   else{
+		
+		
+				
+				var a = gpsToVector(pointA.x,pointA.y,radius);
+				var b = gpsToVector(pointB.x,pointB.y,radius);
+				var c = gpsToVector(pointC.x,pointC.y,radius);
+					
+				geo.vertices.push(  a);
+				geo.vertices.push(  b );
+				geo.vertices.push(   c);
+		
+				var normal = new THREE.Vector3( 0, 1, 0 ); //optional
+				var c = new THREE.Color( 0xffaa00 ); //optional
+				
+				//create a new face using vertices 0, 1, 2
+				var face = new THREE.Face3( geo.vertices.length-3,geo.vertices.length-2,geo.vertices.length-1,normal,c,color);
+		
+			//add the face to the geometry's faces array
+				geo.faces.push( face );
+		}
+	  
+  }
+
+  function gpsToVector(lat,long,radius) {
+		
+	    var phi = (90 - long) * Math.PI / 180;
+	    var theta = (180 - lat) * Math.PI / 180;
+
+	    var sphereSize = 200; 
+		if(radius != undefined) sphereSize = radius;
+		
+		  return new THREE.Vector3(
+				  sphereSize * Math.sin(phi) * Math.cos(theta),
+				  sphereSize * Math.cos(phi),
+				  sphereSize * Math.sin(phi) * Math.sin(theta)
+		  );		
+
+	}
+  
+  
+	// Converts a point [longitude, latitude] in degrees to a THREE.Vector3.
+	function vertex(point,radius) {
+		if(point == undefined){
+			console.log("point undefined");
+			return null;
+		}
+	    var phi = (90 - point[1]) * Math.PI / 180;
+	    var theta = (180 - point[0]) * Math.PI / 180;
+
+	    var sphereSize = 200.1; 
+		
+	    if(radius != undefined) sphereSize = radius;
+	    
+		  return new THREE.Vector3(
+				  sphereSize * Math.sin(phi) * Math.cos(theta),
+				  sphereSize * Math.cos(phi),
+				  sphereSize * Math.sin(phi) * Math.sin(theta)
+		  );		
+
+	}
+	// Converts a GeoJSON MultiLineString in spherical coordinates to a THREE.LineSegments.
+	function wireframe(multilinestring, material) {
+		
+		
+		
+	  var geometry = new THREE.Geometry;
+	  multilinestring.coordinates.forEach(function(line) {
+	    d3.pairs(line.map(vertex), function(a, b) {
+	      geometry.vertices.push(a, b);
+	    });
+	  });
+	  
+	  
+	  return new THREE.LineSegments(geometry, material);
+	}
+	// See https://github.com/d3/d3-geo/issues/95
+	
+
+  
+  
   function addData(data, opts) {
  
 	  
+	  textlabels.forEach(function(text){
+		 container.removeChild(text.element); 
+	  });
+	  
+	  textlabels = [];
+	  
 	  if( this._baseGeometry != undefined){
-		  while (scene.children.length>1)
-		  {
-			  scene.remove(scene.children[1]);
-		  }
+//		  while (scene.children.length>8)
+//		  {
+//			  scene.remove(scene.children[8]);
+//		  }
 		  
 	  }
 	  
@@ -207,7 +669,7 @@ DAT.Globe = function(container, opts) {
         data.forEach(function(city){
             color = colorFnWrapper(data,i);
         	size = 0;
-        	addPoint(city.latitude, city.longitude, size, color, this._baseGeometry);
+        	addPoint(city, size, color, this._baseGeometry);
 
         });
       }
@@ -227,7 +689,7 @@ DAT.Globe = function(container, opts) {
         
         }
         
-        city.object = addPoint(city.latitude, city.longitude, city.population, color,subgeo);
+        city.object = addPoint(city, city.population, color,subgeo);
         
 
     });
@@ -324,51 +786,134 @@ DAT.Globe = function(container, opts) {
     }
   }
   
-  function addLines(lines) {
-	  lines.forEach(function(line){
-		  var points = [];
-		  points.push( globePoint(line.start.latitude,line.start.longitude) );
-		  points.push( globePoint(line.end.latitude,line.end.longitude) );
-		  
-		  var geometry = new THREE.BufferGeometry().setFromPoints( points );
+ 
 
-			var line = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xaaaaaa, opacity: 0.3, linewidth:1} ) );
-			scene.add( line );
+  var roadColors = {
+	  "normal":new THREE.Color( 0xAB9B5D),
+	  "water":new THREE.Color( 0xA2C5FF),
+	  "high":new THREE.Color( 0x6E6957)
+  }
+  
+  function addVertex(geo,start,end,type){
+	  geo.vertices.push(start,end);
+	  geo.colors.push(	roadColors[type]);	  
+	  geo.colors.push(roadColors[type]);	  
+
+  }
+  
+  function addLines(lines) {
+	  
+	  var geo = new THREE.Geometry;
+
+	  var radius = 200.3;
+		
+	  lines.forEach(function(line){
+		  
+		  if(line.waypoint != "" && line.waypoint != null){
+			  var waypoint = JSON.parse(line.waypoint);
+			  
+			  for(var i = 0;i<waypoint.length;i++){
+				  if(i == 0){
+					  addVertex(geo,globePoint(line.start.latitude,line.start.longitude,radius),vertex(waypoint[0],radius),line.type);					  
+				  }else{
+					  addVertex(geo,vertex(waypoint[i-1],radius),vertex(waypoint[i],radius),line.type);
+				  }
+			  }
+			  addVertex(geo,vertex(waypoint[waypoint.length-1],radius),globePoint(line.end.latitude,line.end.longitude,radius),line.type);					  
+			  
+			  
+		  }else{
+			  addVertex(geo,globePoint(line.start.latitude,line.start.longitude,radius),globePoint(line.end.latitude,line.end.longitude,radius),line.type);
+		  }
+		  
+
 	  });
+	  
+//	  for ( var i = 0; i < geo.vertices.length; i+=2 ) {
+//		  geo.colors[ i ] = new THREE.Color( 0xAB9B5D);
+//		  geo.colors[ i + 1 ] = geo.colors[ i ];
+//		}
+
+	var material = new THREE.LineBasicMaterial( {
+	    color: 0xffffff,
+	    vertexColors: THREE.VertexColors
+	} );
+  
+	  
+	  var mesh  = new THREE.LineSegments(geo, material);
+		scene.add( mesh);
+		
+		return mesh;
+
   }
   
   
-  function addPoint(lat, lng, size, color, subgeo) {
+  function addPoint(city, size, color, subgeo) {
 
-	  
-	var geometry = new THREE.BoxGeometry(1, 1, 0.3);
-	geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0,-0.5));
+	
+	var radius = 200.2;
+	var geometry;
+	
+	if(size == 0){
+		geometry = new THREE.CylinderGeometry( 0.1, 0.1, 0.25,16  );
+		
+	    
+	}else{
+		
+		
+		geometry = new THREE.BoxGeometry(1, 1, 0.3);
+		geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0,-0.5));
+	}
+	
+	
 
+	
 	
     var material = new THREE.MeshBasicMaterial( {color: color} );
 
 	var point = new THREE.Mesh(geometry,material);
 
-    var phi = (90 - lat) * Math.PI / 180;
-    var theta = (180 - lng) * Math.PI / 180;
 
-    point.position.x = 200 * Math.sin(phi) * Math.cos(theta);
-    point.position.y = 200 * Math.cos(phi);
-    point.position.z = 200 * Math.sin(phi) * Math.sin(theta);
+	if(size == 0){
+	
+		point.geometry.rotateX((-90 * Math.PI) / 180);
+	//    point.geometry.translate(0,0,-3);
+
+		
+	}else{
+	    var scale = Math.cbrt(size)/100;
+	    scale = Math.max( scale, 0.3 );
+	//    scale = Math.sqrt(scale);
+	    point.scale.x = scale;
+	    point.scale.y = scale;
+	    point.scale.z = scale; // avoid non-invertible matrix
+	
+	    
+	
+	    for (var i = 0; i < point.geometry.faces.length; i++) {
+	      point.geometry.faces[i].color = color;
+	    }
+	    
+	    var text = createTextLabel();
+	    text.setHTML(city.name);
+	    text.setParent(point);
+	    textlabels.push(text);
+	    if(city.labelPosition =='top'){
+	    	text.element.classList.add("label-top")
+	    }
+	    container.appendChild(text.element);
+	}
+
+	
+    var phi = (90 - city.latitude) * Math.PI / 180;
+    var theta = (180 - city.longitude) * Math.PI / 180;
+
+    point.position.x = radius * Math.sin(phi) * Math.cos(theta);
+    point.position.y = radius * Math.cos(phi);
+    point.position.z = radius * Math.sin(phi) * Math.sin(theta);
 
     point.lookAt(mesh.position);
     
-    var scale = Math.sqrt(size)/600;
-    scale = Math.max( scale, 0.15 );
-//    scale = Math.sqrt(scale);
-    point.scale.x = scale;
-    point.scale.y = scale;
-    point.scale.z = scale; // avoid non-invertible matrix
-    point.updateMatrix();
-
-    for (var i = 0; i < point.geometry.faces.length; i++) {
-      point.geometry.faces[i].color = color;
-    }
     
     if(point.matrixAutoUpdate){
       point.updateMatrix();
@@ -376,18 +921,128 @@ DAT.Globe = function(container, opts) {
     
     scene.add(point);
     
+    var geo = new THREE.EdgesGeometry( point.geometry );
+    var mat = new THREE.LineBasicMaterial( { color: 0x111111, linewidth: 4 } );
+    var wireframe = new THREE.LineSegments( geo, mat );
+    wireframe.renderOrder = 1; // make sure wireframes are rendered 2nd
+    point.add( wireframe );
+    
     return point;
     
   }
   
-  function globePoint(lat, lng){
+  
+  function detail(city,filter){
+	 
+	  if(detailHtml == undefined){
+		  detailHtml = createTextLabel();
+		  
+	      container.appendChild(detailHtml.element);
+	  }	 
+	  
+	  if(city == undefined){
+		  detailHtml.element.className = "text-hide";
+		  return;
+	  }
+	  
+	  detailHtml.element.className ="text-detail";
+	  
+	  var html = "<div><h5>"+city.name+"</h5>";
+
+	  if(city.faction > 0){
+		  html +="<strong>"+city.factionData.name+"</strong><br/>";
+
+		  detailHtml.element.style.backgroundColor = city.factionData.color;
+	  }else{
+		  detailHtml.element.style.backgroundColor = "#000";
+		  
+	  }
+	  if(city.population > 0){
+		  html +="<span class='glyphicon glyphicon-user'> </span> "+filter('number')(city.population);
+	  }
+	  
+	  html 	+="</div>";
+
+	  
+	 
+		  
+	  detailHtml.setHTML(html);
+	  detailHtml.setParent(city.object);
+	  detailHtml.updatePosition(true);
+
+  }
+  
+  function createTextLabel() {
+    var div = document.createElement('div');
+    div.className = 'text-label';
+    div.style.position = 'absolute';
+    div.style.width = 100;
+    div.style.height = 100;
+    div.innerHTML = "hi there!";
+    div.style.top = -1000;
+    div.style.left = -1000;
+    
+    var _this = this;
+    
+    return {
+      element: div,
+      parent: false,
+      position: new THREE.Vector3(0,0,0),
+      setHTML: function(html) {
+        this.element.innerHTML = html;
+      },
+      setParent: function(threejsobj) {
+        this.parent = threejsobj;
+      },
+      updatePosition: function(show) {
+        if(parent) {
+          this.position.copy(this.parent.position);
+        }
+        
+        var coords2d = this.get2DCoords(this.position, camera);
+        this.element.style.left = coords2d.x + 'px';
+        this.element.style.top = coords2d.y + 'px';
+
+       
+        if(show!=true){
+        	var distance = this.parent.position.distanceTo(camera.position);
+	        	
+        	var a = this.parent.scale.x / 0.3;
+        	
+        	if(distance < Math.pow(a,2) * 80){
+	        	this.element.classList.remove("text-hide");
+        	}else{
+        		this.element.classList.add("text-hide");
+        		
+        	}
+        	
+	        if(distance> 400){
+        		this.element.classList.add("text-hide");
+	        }
+	        
+        }
+
+	        	
+
+      },
+      get2DCoords: function(position, camera) {
+        var vector = position.project(camera);
+        vector.x = (vector.x + 1)/2 * window.innerWidth;
+        vector.y = -(vector.y - 1)/2 * window.innerHeight;
+        return vector;
+      }
+    };
+  } 
+    
+  
+  function globePoint(lat, lng,sphereSize){
     var phi = (90 - lat) * Math.PI / 180;
     var theta = (180 - lng) * Math.PI / 180;
 
     var point = {};
-    point.x = 200 * Math.sin(phi) * Math.cos(theta);
-    point.y = 200 * Math.cos(phi);
-    point.z = 200 * Math.sin(phi) * Math.sin(theta);
+    point.x = sphereSize * Math.sin(phi) * Math.cos(theta);
+    point.y = sphereSize * Math.cos(phi);
+    point.z = sphereSize * Math.sin(phi) * Math.sin(theta);
     
     return point;
   }
@@ -487,6 +1142,8 @@ DAT.Globe = function(container, opts) {
 		mouse.x = ( x / window.innerWidth ) * 2 - 1;
 		mouse.y = - ( y / window.innerHeight ) * 2 + 1;
 
+	    
+
 	//	checkIntersection();
 
 	}
@@ -554,8 +1211,16 @@ DAT.Globe = function(container, opts) {
     camera.position.z = distance * Math.cos(rotation.x) * Math.cos(rotation.y);
 
     camera.lookAt(mesh.position);
+    
+    for(var i=0; i<textlabels.length; i++) {
+        textlabels[i].updatePosition();
+     }
 
+
+    opts.onMouseover(mouse,camera,scene);
+    
     renderer.render(scene, camera);
+    
   }
 
   init();
@@ -601,6 +1266,7 @@ DAT.Globe = function(container, opts) {
   this.renderer = renderer;
   this.scene = scene;
   this.distanceTo = distanceTo;
+  this.detail = detail;
   
   return this;
 

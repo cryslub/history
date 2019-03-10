@@ -16,7 +16,8 @@ public class Snapshot {
 	int scenario;
 	int year;
 	int city;
-	
+	String type;
+	String labelPosition;
 	
 	public String getId() {
 		return id;
@@ -101,6 +102,18 @@ public class Snapshot {
 	}
 	public void setCity(int city) {
 		this.city = city;
+	}
+	public String getType() {
+		return type;
+	}
+	public void setType(String type) {
+		this.type = type;
+	}
+	public String getLabelPosition() {
+		return labelPosition;
+	}
+	public void setLabelPosition(String labelPosition) {
+		this.labelPosition = labelPosition;
 	}
 	
 	

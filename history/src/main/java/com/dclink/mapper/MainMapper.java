@@ -198,7 +198,7 @@ public interface MainMapper {
 			+ " ")
 	public List<Snapshot> getSnapshot(@Param("year") int year);
 
-	@Select("select r.id,r.start,r.end from road r, scenarioRoad s "
+	@Select("select s.id,r.id as road, r.start,r.end,r.waypoint,r.type from road r, scenarioRoad s "
 			+ " where r.id = s.road and s.scenario = #{scenario} ")
 	public List<Road> getRoads(@Param("scenario") int scenario);
 
@@ -234,14 +234,15 @@ public interface MainMapper {
 	public List<Sub> getSnapshotSubs();
 
 	
-	@Select("select c.id, c.name,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color, s.soldiers, s.id as snapshot, sc.yn, #{scenario} as scenario, m.year "
+	@Select("select c.type,c.id, ifnull(s.name,c.name) as name ,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color, s.soldiers, s.id as snapshot, sc.yn, #{scenario} as scenario, m.year, "
+			+ " c.labelPosition "
 			+ "  from city c"
 			+ " inner join  snapshot s on c.id = s.city "
 			+ " inner join "
 			+ " ( select max(s.year) as year, s.city from snapshot s , scenario sc where sc.year >= s.year  and sc.id = #{scenario} group by s.city ) m  on m.year = s.year and m.city = s.city "
 			+ " left outer join scenarioCity sc on sc.city = c.id and sc.scenario = #{scenario}  "
 			+ " left outer join faction f on f.id = s.faction "
-			+ " where  s.population > 0 " 
+			+ " where  s.population > 0 or c.type='waypoint' " 
 			+ " ")
 	public List<Snapshot> getAllScenarioSnapshot(@Param("scenario") int scenario);
 
@@ -298,10 +299,10 @@ public interface MainMapper {
 	public void setUses(Snapshot snapshot);
 
 	
-	@Update("update snapshot set faction = #{faction},population=#{population} where city=#{id} and year = #{year}")
+	@Update("update snapshot set year=#{year}, faction = #{faction},population=#{population},name=#{name} where id=#{snapshot}")
 	public void setSnapshot(Snapshot snapshot);
 
-	@Insert("insert into snapshot (city,population,year,faction,soldiers) values (#{id},#{population},#{year},0,0)")
+	@Insert("insert into snapshot (city,population,year,faction,soldiers,name) values (#{id},#{population},#{year},0,0,#{name})")
 	public void addSnapshot(Snapshot snapshot);
 
 	@Insert("insert into snapshotSub (snapshot,type,value) values (#{snapshot},'','')")
@@ -322,11 +323,17 @@ public interface MainMapper {
 	@Select("select * from snapshot where city=#{city}")
 	public List<Snapshot> getCitySnapshot(int city);
 
-	@Insert("insert into road (start,end,yn) values (#{start},#{end},1)")
+	@Insert("insert into road (start,end,yn,type) values (#{start},#{end},1,'normal')")
 	public void addRoad(Road road);
 
+	@Update("update road set waypoint = #{waypoint}, type=#{type} where id=#{id}")
+	public void editRoad(Road road);
+	
 	@Delete("delete from road where id=#{id}")
 	public void removeRoad(int id);
+
+	@Delete("delete from scenarioRoad where id=#{id}")
+	public void removeScenarioRoad(int id);
 	
 	@Insert("insert into scenarioRoad (road,scenario) values ((select max(id) from road),#{scenario})")
 	public void addScenarioRoad(Road road);
@@ -337,22 +344,35 @@ public interface MainMapper {
 	@Select("select id from road where (start=#{start} and end=#{end}) or (start=#{end} and end=#{start})")
 	public List<Integer> getRoad(Road road);
 
+	@Select("select * from roadSub")
+	public List<Sub> getRoadSubs();
+	
 	@Insert("insert into scenario (name,year) values (#{name},#{year})")
 	public void addScenario(Scenario scenario);
 
-	@Insert("INSERT INTO scenarioCity (scenario,city) " + 
-			"SELECT (select max(id) from cryslub1.scenario),city " + 
-			"FROM scenarioCity where scenario=(select max(id)-1 from scenario)")
-	public void addScenarioCities();
+	@Insert("INSERT INTO scenarioCity (scenario,city,yn) " + 
+			"SELECT (select max(id) from cryslub1.scenario),city,sc.yn  " + 
+			"			FROM scenarioCity sc,scenario s where sc.scenario= s.id and s.year = (select max(year) from scenario where year < #{year})")
+	public void addScenarioCities(Scenario scenario);
 
-	@Insert("INSERT INTO cryslub1.scenarioRoad (scenario,road) " + 
+	@Insert("INSERT INTO scenarioRoad (scenario,road) " + 
 			"SELECT (select max(id) from cryslub1.scenario),road  " + 
-			"FROM cryslub1.scenarioRoad WHERE scenario = (select max(id)-1 from cryslub1.scenario)")
-	public void addScenarioRoads();
-
-
-
+			"FROM scenarioRoad sc,scenario s  WHERE sc.scenario= s.id and s.year  = (select max(year) from scenario where year < #{year})")
+	public void addScenarioRoads(Scenario scenario);
 
 	
+	@Update("update scenario set name=#{name}, description=#{description}, yn=#{yn} where id = #{id}")
+	public void editScenario(Scenario scenario);
+
+	
+	@Insert("insert into city (name,latitude,longitude,type,labelPosition) values (#{name},#{latitude},#{longitude},#{type},'bottom')")
+	public void addCity(Snapshot snapshot);
+	
+	
+	@Update("update city set type=#{type}, latitude = #{latitude}, longitude=#{longitude}, labelPosition =#{labelPosition} where id = #{id}")
+	public void editCity(Snapshot snapshot);
+
+	
+
 	
 }

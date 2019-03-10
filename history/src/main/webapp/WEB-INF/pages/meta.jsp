@@ -30,17 +30,27 @@
 		<button ng-click="login()">login</button>
 	</div>
 	<div ng-if="logged">
+		<h6>City</h6>
+		<input ng-model="city.name"/><input ng-model="city.latitude"/><input ng-model="city.longitude"/>
+		<select ng-model="city.type">
+			<option>city</option>
+			<option>waypoint</option>
+		</select>
+		<button ng-click="addCity(city)">add city</button>	
+		</br>
+		
 		<input ng-model="cityName"/>
 		<select ng-model="cityId" ng-change="getSnapshot()">
 			<option value="{{city.id}}" ng-repeat="city in cities | toArray:false  | filter : {'name':cityName}">{{city.id}}{{city.name}}</option>
 		</select>
 		
 		<button ng-click="getSnapshot(cityId)">snapshot</button>	
+		<button ng-click="addSnapshot(cityId)">add snapshot</button>	
 				
 		<button ng-click="unuse(cityId)">unuse</button>	
 		<br/>
 		<div ng-repeat="snapshot in snapshots | toArray:false  | orderBy : 'year'">
-			{{snapshot.year}} {{snapshot.faction}} <input ng-model="snapshot.population" ng-change="changeSnapshot(snapshot)"/>
+			<input ng-model="snapshot.year" ng-change="changeSnapshot(snapshot)"/> {{snapshot.faction}} <input ng-model="snapshot.population" ng-change="changeSnapshot(snapshot)"/> {{snapshot.name}}
 		</div>		
 		
 		<input ng-model="type"/>
@@ -48,8 +58,9 @@
 		<input ng-model="value2"/>		
 		<button ng-click="sub(cityId,type,value1,value2)">Sub</button>	
 		
-		<br/>
+		<hr/>
 		
+		<h6>Faction</h6>
 		<select ng-model="factionId" ">
 			<option value="{{faction.id}}" ng-repeat="faction in factions">{{faction.id}}{{faction.name}}</option>
 		</select>
@@ -60,10 +71,24 @@
 		<input ng-model="name"/><input ng-model="color"/>
 		<button ng-click="addFaction(name,color)">add faction</button>	
 		
-		<br/>
+		<hr/>
+		<h6>Scenario</h6>
+		
 		<input ng-model="name"/><input ng-model="year"/>
 		<button ng-click="addScenario(name,year)">new scenario</button>	
 		<br/>
+		<select ng-model="selectedScenario" ng-options="scenario as scenario.name for scenario in scenarios">
+		</select> 
+		<br/>
+		
+		<input ng-model="selectedScenario.name" ng-change="editScenario(selectedScenario)"/> 		<input type="checkbox" ng-model="selectedScenario.yn" ng-change="editScenario(selectedScenario)"/> <br/>
+		<textarea ng-model="selectedScenario.description" ng-change="editScenario(selectedScenario)" style="width:500px;">
+
+		</textarea>
+
+		<hr/>
+		
+		<h6>Hero</h6>
 		<input ng-model="name"/>
 		<input ng-model="birth"/>
 		<input ng-model="valor"/>
@@ -98,6 +123,13 @@ app.controller('myCtrl', function($scope,$http) {
 	$scope.heroes={};
 	$scope.snapshots=[];
 	$scope.factions={};
+	
+	$scope.city={
+		name:'',
+		type:'city',
+		latitude:0,
+		longitude:0			
+	}
 	
 	$http.get("data/elections.do")
     .then(function(response) {
@@ -201,6 +233,16 @@ app.controller('myCtrl', function($scope,$http) {
 		
 	}
 
+	$scope.getScenario = function(){
+		$http.get("data/scenario.do")
+	    .then(function(response) {
+	    	var list = response.data;
+	    	$scope.scenarios = list;
+	    	
+	    });
+		
+	}
+	
 	$scope.addFaction = function(name,color){
 		$http.post("data/faction.do",{
 			name:name,
@@ -222,6 +264,20 @@ app.controller('myCtrl', function($scope,$http) {
 	    });
 		
 	}
+	
+	$scope.editScenario = function(scenario){
+		$http.put("data/scenario.do",{
+			id:scenario.id,
+			name:scenario.name,
+			yn:scenario.yn,
+			description:scenario.description
+		})
+	    .then(function(response) {
+	    	
+	    });
+		
+	}
+
 	$scope.editHero = function(hero){
 		$http.put("data/hero.do",{
 			id:hero.id,
@@ -341,13 +397,21 @@ app.controller('myCtrl', function($scope,$http) {
 
 	$scope.changeSnapshot = function(selected){
 		$http.put("data/snapshot.do",{
+			snapshot:selected.id,
 			id:selected.city,
 			year:selected.year,
 			faction:selected.faction,
-			population:selected.population
+			population:selected.population,
+			name:selected.name
 		}).then(function(){
 			
 		})		
+	}
+
+
+	$scope.addCity = function(city){
+		$http.post("data/city.do",city).then(function(response) {
+	    });		
 	}
 
 	$scope.addScenario = function(name,year){
@@ -359,11 +423,21 @@ app.controller('myCtrl', function($scope,$http) {
 	}
 
 	
-	
+	$scope.addSnapshot = function(id){
+		$http.post("data/snapshot.do",{
+			id:id,
+			population:0,
+			year:0
+		}).then(function(){
+			
+		})		
+	}
+
 	
 	$scope.getCities();
 	$scope.getHeroes();
 	$scope.getFaction();
+	$scope.getScenario();
 //	$scope.getParties();
 // 	$scope.getInspections();
 

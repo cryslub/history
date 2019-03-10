@@ -309,6 +309,19 @@ public class DataController {
 
 
 
+
+	@RequestMapping(value="/city.do",method=RequestMethod.POST)
+	public @ResponseBody void addCity(@RequestBody Snapshot snapshot) {
+		mainMapper.addCity(snapshot);
+		
+    }
+
+	@RequestMapping(value="/city.do",method=RequestMethod.PUT)
+	public @ResponseBody void editCity(@RequestBody Snapshot snapshot) {
+		mainMapper.editCity(snapshot);
+		
+    }
+
 	
 	@RequestMapping(value="/snapshot.do",method=RequestMethod.PUT)
 	public @ResponseBody String setSnapshot(@RequestBody Snapshot snapshot) {
@@ -357,8 +370,14 @@ public class DataController {
 	@RequestMapping(value="/scenario.do",method=RequestMethod.POST)
 	public @ResponseBody void addScenario(@RequestBody Scenario scenario) {
 		mainMapper.addScenario(scenario);
-		mainMapper.addScenarioCities();
-		mainMapper.addScenarioRoads();
+		mainMapper.addScenarioCities(scenario);
+		mainMapper.addScenarioRoads(scenario);
+
+    }
+	
+	@RequestMapping(value="/scenario.do",method=RequestMethod.PUT)
+	public @ResponseBody void editScenario(@RequestBody Scenario scenario) {
+		mainMapper.editScenario(scenario);
 
     }
 
@@ -399,6 +418,14 @@ public class DataController {
 		
         return ret;
     }
+	
+
+	@RequestMapping(value="/road/sub.do",method=RequestMethod.GET)
+	public @ResponseBody List<Sub> getRoadSubs() {
+		List<Sub> ret = mainMapper.getRoadSubs();
+		
+        return ret;
+    }
 
 	@RequestMapping(value="/road.do",method=RequestMethod.POST)
 	public @ResponseBody  void addRoad(@RequestBody Road road) {
@@ -413,11 +440,18 @@ public class DataController {
 		}
 		
     }
-
-	@RequestMapping(value="/road.do",method=RequestMethod.DELETE)
-	public @ResponseBody  void removeRoad(@RequestParam("id") int id) {
+	
+	@RequestMapping(value="/road.do",method=RequestMethod.PUT)
+	public @ResponseBody  void editRoad(@RequestBody Road road) {
 		
-		mainMapper.removeRoad(id);
+		mainMapper.editRoad(road);
+		
+    }
+
+	@RequestMapping(value="/scenario/road.do",method=RequestMethod.DELETE)
+	public @ResponseBody  void removeScenarioRoad(@RequestParam("id") int id) {
+		
+		mainMapper.removeScenarioRoad(id);
 		
     }
 

@@ -7,6 +7,8 @@ public class Scenario {
 	int year;
 	String month;
 	int scenario;
+	String description;
+	boolean yn;
 	
 	public int getId() {
 		return id;
@@ -41,6 +43,20 @@ public class Scenario {
 	public void setScenario(int scenario) {
 		this.scenario = scenario;
 	}
+	public String getDescription() {
+		return description;
+	}
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	public boolean isYn() {
+		return yn;
+	}
+	public void setYn(boolean yn) {
+		this.yn = yn;
+	}
+	
+	
 	
 	
 }
