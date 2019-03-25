@@ -402,11 +402,11 @@ DAT.Globe = function(container, opts) {
 	 var jsons = [{
 	    	file:"json/lakes.json",
 	    	color:water,
-	    	radius:200.1
+	    	radius:200.05
 	    },{
 	    	file:"json/ocean.json",
 	    	color:water,
-	    	radius:200.1
+	    	radius:200.05
 	    },{
 	    	file:"json/glaciated.json",
 	    	color:0xEFF4FF,
@@ -418,7 +418,7 @@ DAT.Globe = function(container, opts) {
 	    },{
 	    	file:"json/bathymetry_K_200.json",
 	    	color:0x1A448B,
-	    	radius:200.2
+	    	radius:200.1
 	    }];
 	    
 	    jsons.forEach(function(json){
@@ -703,23 +703,26 @@ DAT.Globe = function(container, opts) {
   }
   
   function addForce(city, size,color) {
-    var lat, lng, size, i, step, colorFnWrapper;
+
+    var lat = city.latitude;
+    var lng = city.longitude;
+    
+    addSphere(lat,lng,size,color);
+
+  }
+  
+  function addUnit(lat,lng,size,color,name) {
 
 
    
     var subgeo = new THREE.Geometry();
 
-//    if(city.color != null){
-    	color = new THREE.Color(color); 
- //   }
-//    addCylinder(city.latitude, city.longitude, size, color,subgeo);
+    color = new THREE.Color(color); 
 
-    var lat = city.latitude;
-    var lng = city.longitude;
     
-    var geometry = new THREE.CylinderGeometry( 1, 1, 7  );
-    var material = new THREE.MeshToonMaterial( {color: color} );
-//	geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0,-0.5));
+    var geometry = new THREE.CylinderGeometry( 1.5, 1.5, 1,3  );
+    var material = new THREE.MeshBasicMaterial( {color: color} );
+//		geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0,-0.5));
 
 	var point = new THREE.Mesh(geometry,material);
 
@@ -740,16 +743,23 @@ DAT.Globe = function(container, opts) {
     
     var scale = Math.sqrt(size)/500;
     scale = Math.max( scale, 0.1 );
-//	    scale = Math.sqrt(scale);
+//		    scale = Math.sqrt(scale);
     point.scale.x = scale;
     point.scale.y = scale;
     point.scale.z = scale; // avoid non-invertible matrix
    
 
     
-//     this._baseGeometry.morphTargets.push({'name': opts.name, vertices: subgeo.vertices});
+//	     this._baseGeometry.morphTargets.push({'name': opts.name, vertices: subgeo.vertices});
      scene.add(point);
 
+     var geo = new THREE.EdgesGeometry( point.geometry );
+     var mat = new THREE.LineBasicMaterial( { color: 0x333333, linewidth: 1 } );
+     var wireframe = new THREE.LineSegments( geo, mat );
+     wireframe.renderOrder = 1; // make sure wireframes are rendered 2nd
+     point.add( wireframe );
+     
+     
      return point;
 
   }
@@ -805,7 +815,7 @@ DAT.Globe = function(container, opts) {
 	  
 	  var geo = new THREE.Geometry;
 
-	  var radius = 200.3;
+	  var radius = 200.2;
 		
 	  lines.forEach(function(line){
 		  
@@ -894,14 +904,9 @@ DAT.Globe = function(container, opts) {
 	      point.geometry.faces[i].color = color;
 	    }
 	    
-	    var text = createTextLabel();
-	    text.setHTML(city.name);
-	    text.setParent(point);
-	    textlabels.push(text);
-	    if(city.labelPosition =='top'){
-	    	text.element.classList.add("label-top")
-	    }
-	    container.appendChild(text.element);
+	    
+	    addDom(point,city.name,city.labelPosition);
+
 	}
 
 	
@@ -931,6 +936,16 @@ DAT.Globe = function(container, opts) {
     
   }
   
+  function addDom(point,name,labelPosition){
+		var text = createTextLabel();
+		text.setHTML(name);
+		text.setParent(point);
+		textlabels.push(text);
+		if(labelPosition =='top'){
+			text.element.classList.add("label-top")
+		}
+		container.appendChild(text.element);
+  }
   
   function detail(city,filter){
 	 
@@ -1257,6 +1272,8 @@ DAT.Globe = function(container, opts) {
 
   this.addData = addData;
   this.addForce = addForce;
+  this.addUnit = addUnit;
+
   this.remove = remove;
   this.move = move;
   this.changeColor = changeColor;

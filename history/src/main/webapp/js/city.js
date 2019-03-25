@@ -24,6 +24,7 @@ class City{
 		this.longitude = city.longitude;
 		this.name = city.name;
 		this.originalName = city.originalName;
+		this.cityName = city.cityName;
 		this.labelPosition = city.labelPosition;
 		this.type = 'city';
 		

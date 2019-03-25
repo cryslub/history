@@ -11,6 +11,7 @@ public class Snapshot {
 	String color;
 	int soldiers;
 	String originalName;
+	String cityName;
 	int snapshot;
 	boolean yn;
 	int scenario;
@@ -114,6 +115,12 @@ public class Snapshot {
 	}
 	public void setLabelPosition(String labelPosition) {
 		this.labelPosition = labelPosition;
+	}
+	public String getCityName() {
+		return cityName;
+	}
+	public void setCityName(String cityName) {
+		this.cityName = cityName;
 	}
 	
 	

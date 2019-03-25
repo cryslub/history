@@ -28,6 +28,7 @@ import com.dclink.pojo.SoldierClass;
 import com.dclink.pojo.State;
 import com.dclink.pojo.Sub;
 import com.dclink.pojo.Trait;
+import com.dclink.pojo.Unit;
 import com.dclink.pojo.Weapon;
 import com.dclink.pojo.Zone;
 
@@ -234,7 +235,7 @@ public interface MainMapper {
 	public List<Sub> getSnapshotSubs();
 
 	
-	@Select("select c.type,c.id, ifnull(s.name,c.name) as name ,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color, s.soldiers, s.id as snapshot, sc.yn, #{scenario} as scenario, m.year, "
+	@Select("select c.type,c.id, ifnull(s.name,c.name) as name ,c.name as cityName ,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color, s.soldiers, s.id as snapshot, sc.yn, #{scenario} as scenario, m.year, "
 			+ " c.labelPosition "
 			+ "  from city c"
 			+ " inner join  snapshot s on c.id = s.city "
@@ -372,7 +373,17 @@ public interface MainMapper {
 	@Update("update city set type=#{type}, latitude = #{latitude}, longitude=#{longitude}, labelPosition =#{labelPosition} where id = #{id}")
 	public void editCity(Snapshot snapshot);
 
+	@Insert("insert into unit (road,scenario) values (#{road},#{scenario})")
+	public void addUnit(Road road);
+
+	@Select("select * from unit where scenario=#{scenario}")
+	public List<Unit> getUnit(int scenario);
 	
+	@Select("update unit set name=#{name}, faction=#{faction}, population=#{population} where id = #{id}")
+	public void editUnit(Unit unit);
+
+	@Delete("delete from unit where id = #{id}")
+	public void removeUnit(int id);
 
 	
 }

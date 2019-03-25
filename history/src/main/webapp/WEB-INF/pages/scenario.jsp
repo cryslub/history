@@ -213,6 +213,7 @@ body {
 									<div class="container">
 										<div class="row">
 											<div class="col-sm">
+												{{selected.cityName}}<br/>
 												<input ng-model="factionName"/>	
 												<select ng-change="changeSnapshot(selected)" ng-model="selected.faction" 
 													ng-options="faction.id as faction.name for faction in factions | toArray:false  | filter : {'name':factionName}">
@@ -299,7 +300,8 @@ body {
 												
 												<select ng-model="destiny.road.type" ng-change="changeRoad(destiny.road)"><option>normal</option><option>water</option><option>high</option></select>
 												<input ng-model="destiny.road.waypoint" ng-change="changeRoad(destiny.road)"/>
-												<button class="btn btn-primary btn-xs" ng-click="removeRoad(destiny)">Remove</button>		
+												<button class="btn btn-primary btn-xs" ng-click="removeRoad(destiny)">Remove</button>
+												<button class="btn btn-primary btn-xs" ng-click="addUnit(destiny)">Add Unit</button>
 												</div>
 												<input ng-model="cityName"/>
 												<select ng-model="cityId"
@@ -975,11 +977,11 @@ body {
 			<div class="modal-dialog " role="document">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h5 class="modal-title">{{selected.name}} 
+						<h5 class="modal-title"><input ng-model="selected.name" ng-change="changeUnit(selected)"/> 
 								<span class="badge ng-binding" ng-style="{'color':'white','background-color': factions[selected.faction].color}">
 									{{factions[selected.faction].name}}
 								</span>
-								<small class="text-muted" title="Soldiers"> <small><span class="glyphicon glyphicon-user"> </span></small> {{selected.soldiers|number}}</small>
+								<small class="text-muted" title="Population"> <small><span class="glyphicon glyphicon-user"> </span></small> <input ng-model="selected.population" ng-change="changeUnit(selected)"/></small>
 								<small class="text-muted" title="Morale"> <small><span class="glyphicon glyphicon-heart"> </span></small> {{selected.morale|number:0}}</small>
 						</h5>
 						<button type="button" class="close" data-dismiss="modal"
@@ -991,6 +993,21 @@ body {
 						<div id="force-body" class="carousel slide" data-interval="false">
 							<div class="carousel-inner">
 							    <div class="carousel-item active">
+
+						    		<div class="row">
+										<div class="col-sm-12">							    
+										    <input ng-model="factionName"/>	
+											<select ng-change="changeUnit(selected)" ng-model="selected.faction" 
+												ng-options="faction.id as faction.name for faction in factions | toArray:false  | filter : {'name':factionName}">
+											</select> 
+											<button class="btn btn-primary btn-sm"  
+												  			ng-click="removeUnit(selected)"  >
+											Remove	  				
+											</button>
+
+
+							    		</div>
+							    	</div>
 							    
 						    		<div class="row">
 										<div class="col-sm-3">							    
@@ -1581,6 +1598,22 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	    });
 	}
 	
+	$scope.addUnit = function(destiny){
+		$http.post("data/unit.do",
+			{
+				road:destiny.road.road,
+				scenario:$scope.selectedScenario.id
+			}).then(function(response) {
+	//    	$scope.addScenarioRoad();
+//	    	$("#scenario").modal();
+	    });
+	}
+	
+	$scope.removeUnit = function(selected){
+		$http.delete("data/unit.do?id="+selected.id).then(function(response) {
+		});		
+	}
+	
 	$scope.selectFaction = function(selected){
 		
 		$scope.faction=$scope.factions[selected.faction];
@@ -1625,6 +1658,18 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 			
 		})		
 	}
+
+	$scope.changeUnit = function(selected){
+		$http.put("data/unit.do",{
+			id:selected.id,
+			name:selected.name,
+			faction:selected.faction,
+			population:selected.population
+		}).then(function(){
+			
+		})		
+	}
+
 	
 	$scope.changeCity = function(selected){
 		$http.put("data/city.do",{
@@ -1752,11 +1797,12 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	    	var lines = response.data;
 			angular.forEach(lines,function(line){
 				
-				roadMap[line.id] = line;
+				roadMap[line.road] = line;
 		 	});
 			
 			
 			$scope.getRoadSubs ();
+		 	$scope.getUnit();
 	    	
 	    });
 		
@@ -1803,6 +1849,63 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	    });		
 	}
 
+	
+	$scope.getUnit = function(scenario){
+		$http.get("data/unit.do?scenario="+$scope.selectedScenario.id)
+	    .then(function(response) {
+	    	
+	    	response.data.forEach(function(unit){
+	    		
+	    		var line = roadMap[unit.road];
+	    		
+	    		if(line !=undefined){
+	    		
+					if($scope.cities[line.start] != undefined && $scope.cities[line.end] != undefined){
+	
+						if($scope.cities[line.start].yn && $scope.cities[line.end].yn){
+	//						line.forces = [];
+							
+							var latitude;
+							var longitude;
+							
+							if(line.waypoint != "" && line.waypoint != null){
+	
+								var waypoint = JSON.parse(line.waypoint);
+								var half = Math.floor(waypoint.length/2);
+								var point = waypoint[half];
+								latitude = point[1];
+								longitude = point[0];
+								
+							}else{
+								latitude = ($scope.cities[line.start].latitude + $scope.cities[line.end].latitude)/2;
+								longitude = ($scope.cities[line.start].longitude + $scope.cities[line.end].longitude)/2;
+														
+									
+								
+							}
+	
+							
+							var object = globe.addUnit(latitude,longitude,unit.population,$scope.factions[unit.faction].color);
+							objectMap[object.id] = unit;
+							unit.object = object;
+					    	objects.push(object);
+					    	
+					    	unit.factionData = $scope.factions[unit.faction];
+
+							
+						}
+					}
+				
+	    		}
+
+				
+	    	});
+	    	
+	    });
+		
+	}
+
+	
 	
 	
 	$scope.getFaction = function(){

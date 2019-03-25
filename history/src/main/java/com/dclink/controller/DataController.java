@@ -30,6 +30,7 @@ import com.dclink.pojo.SoldierClass;
 import com.dclink.pojo.State;
 import com.dclink.pojo.Sub;
 import com.dclink.pojo.Trait;
+import com.dclink.pojo.Unit;
 import com.dclink.pojo.Weapon;
 import com.dclink.pojo.Zone;
 
@@ -581,5 +582,31 @@ public class DataController {
         return ret;
     }
 	
+	@RequestMapping(value="/unit.do",method=RequestMethod.GET)
+	public @ResponseBody List<Unit> getUnit(@RequestParam("scenario") int scenario) {
+		
+		return mainMapper.getUnit(scenario);
+		
+    }
 	
+	@RequestMapping(value="/unit.do",method=RequestMethod.POST)
+	public @ResponseBody void addUnit(@RequestBody Road road) {
+		
+		mainMapper.addUnit(road);
+		
+    }
+	
+	@RequestMapping(value="/unit.do",method=RequestMethod.PUT)
+	public @ResponseBody void editUnit(@RequestBody Unit unit) {
+		
+		mainMapper.editUnit(unit);
+		
+    }
+	
+	@RequestMapping(value="/unit.do",method=RequestMethod.DELETE)
+	public @ResponseBody void removeUnit(@RequestParam("id") int id) {
+		
+		mainMapper.removeUnit(id);
+		
+    }
 }
