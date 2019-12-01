@@ -239,34 +239,26 @@ body {
 											</div>
 										</div>	
 										<div class="row">
-											<div class="col-sm">    
-												<span class="text-muted" ng-if="selected.governer!=0">
-													<span class="glyphicon glyphicon-king " title="Governer"> </span> <span title="Governer">{{heroes[selected.governer].name}}</span> <span title="{{heroes[selected.governer].name}}">{{heroes[selected.governer].originalName}}</span> 
-											  		<table style="display:inline-block;margin-left:3px;    border-spacing: 0;">
-													 	<tr>
-													 		<td ng-repeat="col in heroes[selected.governer].nameImage" style="text-align:center;padding:0px;line-height:8px;">
-																 <img ng-repeat-start="image in col track by $index" ng-src="{{image}}" title="{{heroes[selected.governer].name}}" 
-																 	ng-class="{'ml--5':$index==1}" style="max-width: 60%; max-height: 60%;margin:0px;">
-																 <br ng-if="$index==0" ng-repeat-end/>
-													 		</td>
-													 	</tr>
-													 </table>																							 
-												</span>
-												<button class="btn btn-primary btn-xs operate" title="Change" href="#city-body"  data-slide="next" ng-click="stat='governer';" ng-show="(selected.heroes|toArray).length>0">
-													<span class="glyphicon glyphicon-refresh"></span></button>
-												
-												<button class="btn btn-primary btn-xs" ng-click="addSnapshotSub(selected)">Add</button>
+											<div class="col-sm">    												
+												<button class="btn btn-primary btn-xs" ng-click="addHero(selected)">Add Hero</button>
 											</div>
 										</div>
-										<div class="row" ng-repeat="sub in selected.sub">
+										<div class="row" ng-repeat="sub in selected.heroes">
 											<div class="col-sm">    
-												<select ng-change="changeSnapshotSub(sub)" ng-model="sub.type">
-													<option value="governer">governer</option>
-													<option value="hero">hero</option>
-												</select>
-												<select ng-change="changeSnapshotSub(sub)" ng-model="sub.value" ng-options="hero.id as hero.name for hero in heroes | toArray:false  | orderBy:'-id'"></select> 
-												{{sub.value}}
-												<button class="btn btn-primary btn-xs" ng-click="removeSnapshotSub(sub)">Remove</button>
+												<input ng-model="sub.heroName"/>
+												<select ng-change="changeScenarioCitySub(sub)" ng-model="sub.hero" ng-options="hero.id as hero.name for hero in heroes | toArray:false  | filter : {'name':sub.heroName} "></select> 
+													{{sub.hero}}
+													<span class="badge badge-danger" title="Valor">
+														{{heroes[sub.hero].valor}}
+													</span>
+										  			<span class="badge badge-primary"  title="Wisdom">
+														{{heroes[sub.hero].wisdom}}
+													</span>
+										  			<span class="badge badge-warning"  title="Authority">
+														{{heroes[sub.hero].authority}}
+													</span>
+													<img ng-src="{{heroes[sub.hero].portrait}}" style="height: 100px;"/>
+												<button class="btn btn-primary btn-xs" ng-click="removeScenarioCitySub(sub)">Remove</button>
 
 											</div>
 										</div>
@@ -1704,6 +1696,18 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		})		
 	}
 
+	$scope.changeScenarioCitySub = function(sub){
+		
+		if(sub.hero == 0 || sub.hero == null) return;
+
+		$http.put("data/scenario/city/sub.do",{
+			id:sub.id,
+			hero:sub.hero
+		}).then(function(){
+			
+		})		
+	}
+
 	
 	$scope.removeSnapshotSub = function(sub){
 		$http.delete("data/snapshot/sub.do?id="+sub.id,{
@@ -1715,6 +1719,16 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		})		
 	}
 
+	
+	$scope.removeScenarioCitySub = function(sub){
+		$http.delete("data/scenario/city/sub.do?id="+sub.id,{
+			id:sub.id,
+			type:sub.type,
+			value:sub.value
+		}).then(function(){
+			
+		})		
+	}
 	
 	$scope.addSnapshot = function(selected){
 		$http.post("data/snapshot.do",{
@@ -1734,6 +1748,35 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 			
 		})		
 	}
+	
+	$scope.addHero = function(selected){
+		$http.post("data/scenario/hero.do",{
+			scenario:$scope.selectedScenario.id,
+			city:selected.id
+		}).then(function(){
+			
+		})		
+	}
+	
+	
+	$scope.getScenarioCitySub = function(){
+		$http.get("data/scenario/city/sub.do?scenario="+$scope.selectedScenario.id)
+	    .then(function(response) {
+	    	
+	    	var list = response.data;
+			angular.forEach(list,function(sub){
+
+				var city = cityMap[sub.city];
+				if(city !=undefined){
+					 city.heroes.push(sub);
+				}
+			
+			});
+
+	    });
+		
+	}
+
 
 	
 	$scope.changeShowUnuse = function(){
@@ -1946,7 +1989,10 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	}
 	
 	$scope.getHeroes = function(){
-		$http.get("data/hero.do")
+		
+		$scope.heroes = {};
+		
+		$http.get("data/hero.do?year="+$scope.selectedScenario.year)
 	    .then(function(response) {
 	    	var list = response.data;
 			angular.forEach(list,function(hero){
@@ -1956,7 +2002,7 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 				$scope.heroes[hero.id] = hero;
 		 	});
 			
-			$scope.getHeroSubs();
+//			$scope.getHeroSubs();
 	    	
 	    });
 		
@@ -1975,6 +2021,8 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 						hero.nameImage[sub.value1] = [];
 					}
 					hero.nameImage[sub.value1].push(sub.value);
+				}else if(sub.type == 'city'){
+					
 				}else{
 					hero.sub.push(sub);
 				}
@@ -2091,11 +2139,7 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 				var city = snapshotMap[sub.snapshot];
 				if(city !=undefined){
 					city.sub.push(sub);
-					if(sub.type == 'hero'){
-						sub.value = parseInt(sub.value);
-						var id = sub.value;
-						city.heroes[id] = {id:id,state:'garrisoned'};
-					}
+					
 					if(sub.type == 'governer'){
 						sub.value = parseInt(sub.value);
 
@@ -2135,6 +2179,10 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	$scope.selectScenario = function(scenario){
 		$scope.selectedScenario=scenario;
 		
+		$scope.cities = {};
+		
+		cityMap = {};
+		snapshotMap = {};
 		$scope.cities = {};
 		
 		$http.get("data/allScenarioSnapshot.do?scenario="+scenario.id)
@@ -2177,7 +2225,10 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		  	
 		  	
 		  	//$scope.getCitySubs();
+		  	$scope.getHeroes();
+
 		  	$scope.getSnapshotSubs();
+		  	$scope.getScenarioCitySub();
 		  	//$scope.getRoad();
 		  	
 
@@ -3571,7 +3622,6 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	
 	$scope.getBuildings();
 	$scope.getWeapons();
-	$scope.getHeroes();
 	$scope.getSoldierClass();
 
 	$scope.getTraits();

@@ -15,6 +15,8 @@ class City{
 		this.snapshot = city.snapshot;
 		this.year = city.year;
 		this.scenario = city.scenario;
+		this.scenarioCity = city.scenarioCity;
+
 		this.color = city.color;
 		this.faction = city.faction;
 		this.factionData = $scope.factions[city.faction];
@@ -48,7 +50,7 @@ class City{
 		
 		this.buildings = {};
 		this.weapons = {};
-		this.heroes = {};
+		this.heroes = [];
 		this.soldierClasses = {};
 		this.nameImage = {};
  		

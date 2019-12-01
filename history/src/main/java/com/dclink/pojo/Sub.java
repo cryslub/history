@@ -12,8 +12,11 @@ public class Sub {
 	int person;
 	int road;
 	
+	
 	int city;
 	int snapshot;
+	int scenario;
+	int scenarioCity;
 	int hero;
 	String type;
 	String value;
@@ -96,6 +99,20 @@ public class Sub {
 	
 	
 	
+	public int getScenario() {
+		return scenario;
+	}
+	public void setScenario(int scenario) {
+		this.scenario = scenario;
+	}
+	
+	
+	public int getScenarioCity() {
+		return scenarioCity;
+	}
+	public void setScenarioCity(int scenarioCity) {
+		this.scenarioCity = scenarioCity;
+	}
 	public int getHero() {
 		return hero;
 	}

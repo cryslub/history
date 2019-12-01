@@ -21,15 +21,27 @@ public class MainController {
         return "scenario";
     }
 	
+	@RequestMapping("/light.do")
+	public String light() {
+        return "light";
+    }
+	
 	@RequestMapping("/admin.do")
 	public String admin() {
         return "admin";
+        
     }
 	
 	@RequestMapping("/meta.do")
 	public String meta() {
         return "meta";
     }
+
+	@RequestMapping("/heroes.do")
+	public String heroes() {
+        return "heroes";
+    }
+
 	
 	@RequestMapping("/test.do")
 	public String test() {

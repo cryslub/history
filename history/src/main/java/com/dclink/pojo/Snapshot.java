@@ -19,6 +19,7 @@ public class Snapshot {
 	int city;
 	String type;
 	String labelPosition;
+	int scenarioCity;
 	
 	public String getId() {
 		return id;
@@ -122,6 +123,13 @@ public class Snapshot {
 	public void setCityName(String cityName) {
 		this.cityName = cityName;
 	}
+	public int getScenarioCity() {
+		return scenarioCity;
+	}
+	public void setScenarioCity(int scenarioCity) {
+		this.scenarioCity = scenarioCity;
+	}
+	
 	
 	
 }

@@ -235,7 +235,8 @@ public interface MainMapper {
 	public List<Sub> getSnapshotSubs();
 
 	
-	@Select("select c.type,c.id, ifnull(s.name,c.name) as name ,c.name as cityName ,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color, s.soldiers, s.id as snapshot, sc.yn, #{scenario} as scenario, m.year, "
+	@Select("select c.type,c.id, ifnull(s.name,c.name) as name ,c.name as cityName ,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color, s.soldiers, s.id as snapshot, sc.yn, "
+			+ "#{scenario} as scenario, m.year, sc.id as scenarioCity, "
 			+ " c.labelPosition "
 			+ "  from city c"
 			+ " inner join  snapshot s on c.id = s.city "
@@ -277,9 +278,10 @@ public interface MainMapper {
 	@Select("select * from soldierClassSub")
 	public List<Sub> getSoldierClassSub();
 
-	@Select("select * from hero")
-	public List<Hero> getHeroes();
+	@Select("select * from hero where #{year} is null or (birth <= #{year} and #{year} <= death)")
+	public List<Hero> getHeroes(Integer year);
 
+	
 	@Select("select * from heroSub")
 	public List<Sub> getHeroSubs();
 
@@ -315,10 +317,10 @@ public interface MainMapper {
 	@Delete("delete from snapshotSub where id = #{id}")
 	public void removeSnapshotSub(int id);
 
-	@Insert("insert into hero (name,birth,valor,wisdom,authority) values(#{name},#{birth},#{valor},#{wisdom},#{authority})")
+	@Insert("insert into hero (name,birth,death,valor,wisdom,authority,portrait) values(#{name},#{birth},#{death},#{valor},#{wisdom},#{authority},#{portrait})")
 	public void addHero(Hero hero);
 	
-	@Update("update hero set name=#{name},birth=#{birth},valor=#{valor},wisdom=#{wisdom},authority=#{authority} where id=#{id}")
+	@Update("update hero set name=#{name},birth=#{birth},death=#{death},valor=#{valor},wisdom=#{wisdom},authority=#{authority},portrait=#{portrait} where id=#{id}")
 	public void editHero(Hero hero);
 
 	@Select("select * from snapshot where city=#{city}")
@@ -384,6 +386,19 @@ public interface MainMapper {
 
 	@Delete("delete from unit where id = #{id}")
 	public void removeUnit(int id);
+
+	@Insert("insert into scenarioHero (scenario,city) values (#{scenario},#{city})")
+	public void addScenarioHero(Sub sub);
+
+	@Select("select * from scenarioHero where scenario = #{scenario} ")
+	public List<Sub> getScenarioCitySubs(int scenario);
+	
+	
+	@Insert("update scenarioHero set hero=#{hero} where id=#{id}")
+	public void editScenarioCitySub(Sub sub);
+
+	@Delete("delete from scenarioHero where id = #{id}")
+	public void removeScenarioCitySub(int id);
 
 	
 }

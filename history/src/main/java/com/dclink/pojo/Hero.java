@@ -6,10 +6,14 @@ public class Hero {
 	int id;
 	String name;
 	int birth;
+	int death;
+
 	String originalName;
 	int valor;
 	int wisdom;
 	int authority;
+	
+	String portrait;
 	
 	
 	public int getId() {
@@ -30,6 +34,14 @@ public class Hero {
 	}
 	public void setBirth(int birth) {
 		this.birth = birth;
+	}
+	
+	
+	public int getDeath() {
+		return death;
+	}
+	public void setDeath(int death) {
+		this.death = death;
 	}
 	public String getOriginalName() {
 		return originalName;
@@ -54,6 +66,12 @@ public class Hero {
 	}
 	public void setAuthority(int authority) {
 		this.authority = authority;
+	}
+	public String getPortrait() {
+		return portrait;
+	}
+	public void setPortrait(String portrait) {
+		this.portrait = portrait;
 	}
 	
 	

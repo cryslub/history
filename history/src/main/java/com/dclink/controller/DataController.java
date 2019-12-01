@@ -358,6 +358,14 @@ public class DataController {
 		
         return "";
     }
+	
+	@RequestMapping(value="/scenario/hero.do",method=RequestMethod.POST)
+	public @ResponseBody String addScenarioHero(@RequestBody Sub sub) {
+		mainMapper.addScenarioHero(sub);
+		
+        return "";
+    }
+
 
 	
 	@RequestMapping(value="/scenario.do",method=RequestMethod.GET)
@@ -557,8 +565,8 @@ public class DataController {
     }
 	
 	@RequestMapping(value="/hero.do",method=RequestMethod.GET)
-	public @ResponseBody List<Hero> getHeroes() {
-		List<Hero> ret = mainMapper.getHeroes();
+	public @ResponseBody List<Hero> getHeroes(Integer year) {
+		List<Hero> ret = mainMapper.getHeroes(year);
 		
         return ret;
     }
@@ -609,4 +617,31 @@ public class DataController {
 		mainMapper.removeUnit(id);
 		
     }
+	
+	
+	@RequestMapping(value="/scenario/city/sub.do",method=RequestMethod.GET)
+	public @ResponseBody List<Sub> getScenarioCitySubs(int scenario) {
+		List<Sub> ret = mainMapper.getScenarioCitySubs( scenario);
+		
+        return ret;
+    }
+
+	
+	@RequestMapping(value="/scenario/city/sub.do",method=RequestMethod.PUT)
+	public @ResponseBody String editScenarioCitySub(@RequestBody Sub sub) {
+		mainMapper.editScenarioCitySub(sub);
+		
+        return "";
+    }
+
+	@RequestMapping(value="/scenario/city/sub.do",method=RequestMethod.DELETE)
+	public @ResponseBody String removeScenarioCitySub(@RequestParam("id") int id) {
+		mainMapper.removeScenarioCitySub(id);
+		
+        return "";
+    }
+
+	
+	
+	
 }
