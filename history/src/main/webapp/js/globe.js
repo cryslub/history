@@ -86,7 +86,8 @@ DAT.Globe = function(container, opts) {
   var padding = 40;
   var PI_HALF = Math.PI / 2;
 
-  var radius = 200;
+  var totalSize = 0.5;
+  var radius = 200*totalSize;
   
   var textlabels = [];
   var detailHtml;
@@ -105,7 +106,7 @@ DAT.Globe = function(container, opts) {
 
     scene = new THREE.Scene();
 
-    var geometry = new THREE.SphereGeometry(199, 40, 30);
+    var geometry = new THREE.SphereGeometry(radius-1*totalSize, 40, 30);
 
     shader = Shaders['earth'];
     uniforms = THREE.UniformsUtils.clone(shader.uniforms);
@@ -187,12 +188,12 @@ DAT.Globe = function(container, opts) {
     var arr = [{
     	file:"json/rivers_simplify.json",
     	color:water,
-    	radius:200.1
+    	radius:radius+0.1*totalSize
     },
     {
     	file:"json/reefs.json",
     	color:0x63ABC1,
-    	radius:200.1
+    	radius:radius+0.1*totalSize
     }];
     
     
@@ -286,7 +287,12 @@ DAT.Globe = function(container, opts) {
 	        color: 0x0D490D,
 	        morphTargets: false,
 	        side: THREE.DoubleSide
-	      })
+	      }),
+	      new THREE.MeshBasicMaterial({ // thick forest
+		        color: water,
+		        morphTargets: false,
+		        side: THREE.DoubleSide
+		      })
 
 	]
 
@@ -324,7 +330,9 @@ DAT.Globe = function(container, opts) {
 							var color = 1;
 							if(feature.properties != undefined){
 								
+								if(feature.properties.BIOME>=map.length) console.log(feature.properties.BIOME);
 								color = map[feature.properties.BIOME];
+								
 								
 							}
 							
@@ -379,12 +387,15 @@ DAT.Globe = function(container, opts) {
 								}
 								
 							}
+							if(feature.properties.BIOME==98){
+								color = 11;
+							}
 							if(feature.geometry.type == 'Polygon'){
-								drawCoordinate(geo,feature.geometry.coordinates,200,color);
+								drawCoordinate(geo,feature.geometry.coordinates,radius,color);
 							}
 							if(feature.geometry.type == 'MultiPolygon'){
 								feature.geometry.coordinates.forEach(function(coordinate){
-									drawCoordinate(geo,coordinate,200,color);
+									drawCoordinate(geo,coordinate,radius,color);
 								
 								});
 							}
@@ -402,23 +413,19 @@ DAT.Globe = function(container, opts) {
 	 var jsons = [{
 	    	file:"json/lakes.json",
 	    	color:water,
-	    	radius:200.05
-	    },{
-	    	file:"json/ocean.json",
-	    	color:water,
-	    	radius:200.05
+	    	radius:radius+0.05
 	    },{
 	    	file:"json/glaciated.json",
 	    	color:0xEFF4FF,
-	    	radius:200.05
+	    	radius:radius+0.05
 	    },{
 	    	file:"json/playas.json",
 	    	color:0xffffff,
-	    	radius:200.1
+	    	radius:radius+0.1
 	    },{
 	    	file:"json/bathymetry_K_200.json",
 	    	color:0x1A448B,
-	    	radius:200.1
+	    	radius:radius+0.05
 	    }];
 	    
 	    jsons.forEach(function(json){
@@ -507,7 +514,7 @@ DAT.Globe = function(container, opts) {
   
   function makeFace(geo,pointA,pointB,pointC,radius,color){
 	  
-		var max =2;
+		var max =4;
 
 		
 	   var arr = [{
@@ -579,7 +586,7 @@ DAT.Globe = function(container, opts) {
 	    var phi = (90 - long) * Math.PI / 180;
 	    var theta = (180 - lat) * Math.PI / 180;
 
-	    var sphereSize = 200; 
+	    var sphereSize = radius;
 		if(radius != undefined) sphereSize = radius;
 		
 		  return new THREE.Vector3(
@@ -600,7 +607,7 @@ DAT.Globe = function(container, opts) {
 	    var phi = (90 - point[1]) * Math.PI / 180;
 	    var theta = (180 - point[0]) * Math.PI / 180;
 
-	    var sphereSize = 200.1; 
+	    var sphereSize = 200.1*totalSize;
 		
 	    if(radius != undefined) sphereSize = radius;
 	    
@@ -730,7 +737,7 @@ DAT.Globe = function(container, opts) {
     var phi = (90 - lat) * Math.PI / 180;
     var theta = (180 - lng) * Math.PI / 180;
 
-    var sphereSize = 200; 
+    var sphereSize = radius;
     
     point.position.x = sphereSize * Math.sin(phi) * Math.cos(theta);
     point.position.y = sphereSize * Math.cos(phi);
@@ -815,7 +822,7 @@ DAT.Globe = function(container, opts) {
 	  
 	  var geo = new THREE.Geometry;
 
-	  var radius = 200.2;
+	  var sphereSize = radius+0.2*totalSize;
 		
 	  lines.forEach(function(line){
 		  
@@ -824,16 +831,16 @@ DAT.Globe = function(container, opts) {
 			  
 			  for(var i = 0;i<waypoint.length;i++){
 				  if(i == 0){
-					  addVertex(geo,globePoint(line.start.latitude,line.start.longitude,radius),vertex(waypoint[0],radius),line.type);					  
+					  addVertex(geo,globePoint(line.start.latitude,line.start.longitude,sphereSize),vertex(waypoint[0],sphereSize),line.type);
 				  }else{
-					  addVertex(geo,vertex(waypoint[i-1],radius),vertex(waypoint[i],radius),line.type);
+					  addVertex(geo,vertex(waypoint[i-1],sphereSize),vertex(waypoint[i],sphereSize),line.type);
 				  }
 			  }
-			  addVertex(geo,vertex(waypoint[waypoint.length-1],radius),globePoint(line.end.latitude,line.end.longitude,radius),line.type);					  
+			  addVertex(geo,vertex(waypoint[waypoint.length-1],sphereSize),globePoint(line.end.latitude,line.end.longitude,sphereSize),line.type);
 			  
 			  
 		  }else{
-			  addVertex(geo,globePoint(line.start.latitude,line.start.longitude,radius),globePoint(line.end.latitude,line.end.longitude,radius),line.type);
+			  addVertex(geo,globePoint(line.start.latitude,line.start.longitude,sphereSize),globePoint(line.end.latitude,line.end.longitude,sphereSize),line.type);
 		  }
 		  
 
@@ -861,17 +868,17 @@ DAT.Globe = function(container, opts) {
   function addPoint(city, size, color, subgeo) {
 
 	
-	var radius = 200.2;
+	var sphereSize = radius+0.1*totalSize;
 	var geometry;
 	
 	if(size == 0){
-		geometry = new THREE.CylinderGeometry( 0.1, 0.1, 0.25,16  );
+		geometry = new THREE.CylinderGeometry( 0.05*totalSize, 0.05*totalSize, 0.2*totalSize,16  );
 		
 	    
 	}else{
 		
 		
-		geometry = new THREE.BoxGeometry(1, 1, 0.3);
+		geometry = new THREE.BoxGeometry(1*totalSize, 1*totalSize, 0.3*totalSize);
 		geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0,-0.5));
 	}
 	
@@ -891,8 +898,8 @@ DAT.Globe = function(container, opts) {
 
 		
 	}else{
-	    var scale = Math.cbrt(size)/100;
-	    scale = Math.max( scale, 0.3 );
+	    var scale = Math.cbrt(size*totalSize)/100;
+	    scale = Math.max( scale, 0.3*totalSize );
 	//    scale = Math.sqrt(scale);
 	    point.scale.x = scale;
 	    point.scale.y = scale;
@@ -913,9 +920,9 @@ DAT.Globe = function(container, opts) {
     var phi = (90 - city.latitude) * Math.PI / 180;
     var theta = (180 - city.longitude) * Math.PI / 180;
 
-    point.position.x = radius * Math.sin(phi) * Math.cos(theta);
-    point.position.y = radius * Math.cos(phi);
-    point.position.z = radius * Math.sin(phi) * Math.sin(theta);
+    point.position.x = sphereSize * Math.sin(phi) * Math.cos(theta);
+    point.position.y = sphereSize * Math.cos(phi);
+    point.position.z = sphereSize * Math.sin(phi) * Math.sin(theta);
 
     point.lookAt(mesh.position);
     
@@ -1206,7 +1213,7 @@ DAT.Globe = function(container, opts) {
   function zoom(delta) {
     distanceTarget -= delta;
     distanceTarget = distanceTarget > 600 ? 600 : distanceTarget;
-    distanceTarget = distanceTarget < 230 ? 230 : distanceTarget;
+    distanceTarget = distanceTarget < 220 *totalSize ? 220 *totalSize: distanceTarget;
   }
 
   function animate() {
