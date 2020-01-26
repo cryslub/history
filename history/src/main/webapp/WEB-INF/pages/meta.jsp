@@ -50,7 +50,8 @@
 		<button ng-click="unuse(cityId)">unuse</button>	
 		<br/>
 		<div ng-repeat="snapshot in snapshots | toArray:false  | orderBy : 'year'">
-			<input ng-model="snapshot.year" ng-change="changeSnapshot(snapshot)"/> {{snapshot.faction}} <input ng-model="snapshot.population" ng-change="changeSnapshot(snapshot)"/> {{snapshot.name}}
+			<input ng-model="snapshot.year" ng-change="changeSnapshot(snapshot)"/> {{snapshot.faction}} <input ng-model="snapshot.population" ng-change="changeSnapshot(snapshot)"/>
+			<input ng-model="snapshot.name" ng-change="changeSnapshot(snapshot)"/>
 		</div>		
 		
 		<input ng-model="type"/>
@@ -61,12 +62,15 @@
 		<hr/>
 		
 		<h6>Faction</h6>
+		<input ng-model="factionName"/>
 		<select ng-model="factionId" ">
-			<option value="{{faction.id}}" ng-repeat="faction in factions">{{faction.id}}{{faction.name}}</option>
+			<option value="{{faction.id}}" ng-repeat="faction in factions | toArray:false  | filter : {'name':factionName}">{{faction.id}}{{faction.name}}</option>
 		</select>
 		<br/>
 		<input ng-model="factions[factionId].name" ng-change="editFaction(factions[factionId])"/><input ng-model="factions[factionId].color"  ng-change="editFaction(factions[factionId])"/>
-		
+		<input ng-model="factions[factionId].region" ng-change="editFaction(factions[factionId])"/>
+		<input ng-model="factions[factionId].area" ng-change="editFaction(factions[factionId])"/>
+
 		<br/>
 		<input ng-model="name"/><input ng-model="color"/>
 		<button ng-click="addFaction(name,color)">add faction</button>	
@@ -81,7 +85,9 @@
 		</select> 
 		<br/>
 		
-		<input ng-model="selectedScenario.name" ng-change="editScenario(selectedScenario)"/> 		<input type="checkbox" ng-model="selectedScenario.yn" ng-change="editScenario(selectedScenario)"/> <br/>
+		<input ng-model="selectedScenario.name" ng-change="editScenario(selectedScenario)"/> 		
+		<input ng-model="selectedScenario.age" ng-change="editScenario(selectedScenario)"/> 		
+		<input type="checkbox" ng-model="selectedScenario.yn" ng-change="editScenario(selectedScenario)"/> <br/>
 		<textarea ng-model="selectedScenario.description" ng-change="editScenario(selectedScenario)" style="width:500px;">
 
 		</textarea>
@@ -257,7 +263,9 @@ app.controller('myCtrl', function($scope,$http) {
 		$http.put("data/faction.do",{
 			name:faction.name,
 			color:faction.color,
-			id:faction.id
+			id:faction.id,
+			region:faction.region,
+			area:faction.area			
 		})
 	    .then(function(response) {
 	    	
@@ -269,6 +277,7 @@ app.controller('myCtrl', function($scope,$http) {
 		$http.put("data/scenario.do",{
 			id:scenario.id,
 			name:scenario.name,
+			age:scenario.age,
 			yn:scenario.yn,
 			description:scenario.description
 		})

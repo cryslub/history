@@ -46,7 +46,7 @@ class City{
 		this.forces = [];
 		this.traits = [];
 		this.sub = [];
- 		this.mustering = new Mustering(this);
+ 		//this.mustering = new Mustering(this);
 		
 		this.buildings = {};
 		this.weapons = {};
@@ -69,7 +69,15 @@ class City{
  			self.soldierClasses[soldierClass.type] = {garrison : 0,muster:0};
  		});
  		
- 		if(this.faction ==0){
+ 	
+ 					 		
+ 		//this.makeBlockSize();
+ 		
+ 		//this.makeMaxBlockSize();
+	}
+	
+	initCity(){
+		if(this.faction ==0){
  			self.buildings.residence.amount =  Math.floor((this.population/1000)+(this.population%1000==0?0:1));
  			self.buildings.granary.amount =  1;
  			self.buildings.silver.amount = 1;		 
@@ -78,10 +86,6 @@ class City{
  			self.buildings.granary.amount =  Math.floor((this.food/1000)+(this.food%1000==0?0:1));
  			self.buildings.silver.amount = Math.floor((this.silver/1000)+(this.silver%1000==0?0:1));	 		
  		}
- 					 		
- 		this.makeBlockSize();
- 		
- 		this.makeMaxBlockSize();
 	}
 	
 	makeBlockSize(){

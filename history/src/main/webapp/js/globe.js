@@ -94,6 +94,8 @@ DAT.Globe = function(container, opts) {
   
   function init() {
 
+	 moveCameraTo(34,36,300);
+	 
     container.style.color = '#fff';
     container.style.font = '13px/20px Arial, sans-serif';
 
@@ -417,11 +419,15 @@ DAT.Globe = function(container, opts) {
 	    },{
 	    	file:"json/glaciated.json",
 	    	color:0xEFF4FF,
-	    	radius:radius+0.05
+	    	radius:radius+0.5
 	    },{
 	    	file:"json/playas.json",
 	    	color:0xffffff,
 	    	radius:radius+0.1
+	    },{
+	    	file:"json/earth-rivers-simplify.json",
+	    	color:water,
+	    	radius:radius+0.05
 	    },{
 	    	file:"json/bathymetry_K_200.json",
 	    	color:0x1A448B,
@@ -514,7 +520,7 @@ DAT.Globe = function(container, opts) {
   
   function makeFace(geo,pointA,pointB,pointC,radius,color){
 	  
-		var max =4;
+		var max =12;
 
 		
 	   var arr = [{
@@ -642,7 +648,7 @@ DAT.Globe = function(container, opts) {
  
 	  
 	  textlabels.forEach(function(text){
-		 container.removeChild(text.element); 
+		  if(text.added) container.removeChild(text.element); 
 	  });
 	  
 	  textlabels = [];
@@ -808,22 +814,46 @@ DAT.Globe = function(container, opts) {
   var roadColors = {
 	  "normal":new THREE.Color( 0xAB9B5D),
 	  "water":new THREE.Color( 0xA2C5FF),
-	  "high":new THREE.Color( 0x6E6957)
+	  "high":new THREE.Color( 0x6E6957),
+	  "mountain":new THREE.Color( 0x82A876),
+	  "desert":new THREE.Color( 0xECB480) 
   }
   
-  function addVertex(geo,start,end,type){
-	  geo.vertices.push(start,end);
-	  geo.colors.push(	roadColors[type]);	  
-	  geo.colors.push(roadColors[type]);	  
+  function addVertex(vertices,colors,start,end,type){
+	  
+	    vertices.push(start.x);
+	    vertices.push(start.y);
+	    vertices.push(start.z);
 
-  }
-  
+	    colors.push(roadColors[type].r);
+	    colors.push(roadColors[type].g);
+	    colors.push(roadColors[type].b);
+
+	    vertices.push(end.x);
+	    vertices.push(end.y);
+	    vertices.push(end.z);
+
+	    colors.push(roadColors[type].r);
+	    colors.push(roadColors[type].g);
+	    colors.push(roadColors[type].b);
+	    
+	  
+//	  geo.vertices.push(start,end);
+//	  geo.colors.push(	roadColors[type]);	  
+//	  geo.colors.push(roadColors[type]);	  
+
+}
+
+
   function addLines(lines) {
 	  
-	  var geo = new THREE.Geometry;
+	  var geo = new THREE.BufferGeometry;
 
 	  var sphereSize = radius+0.2*totalSize;
-		
+	
+	  var vertices = [];
+	  var colors = [];
+	  
 	  lines.forEach(function(line){
 		  
 		  if(line.waypoint != "" && line.waypoint != null){
@@ -831,16 +861,16 @@ DAT.Globe = function(container, opts) {
 			  
 			  for(var i = 0;i<waypoint.length;i++){
 				  if(i == 0){
-					  addVertex(geo,globePoint(line.start.latitude,line.start.longitude,sphereSize),vertex(waypoint[0],sphereSize),line.type);
+					  addVertex(vertices,colors,globePoint(line.start.latitude,line.start.longitude,sphereSize),vertex(waypoint[0],sphereSize),line.type);
 				  }else{
-					  addVertex(geo,vertex(waypoint[i-1],sphereSize),vertex(waypoint[i],sphereSize),line.type);
+					  addVertex(vertices,colors,vertex(waypoint[i-1],sphereSize),vertex(waypoint[i],sphereSize),line.type);
 				  }
 			  }
-			  addVertex(geo,vertex(waypoint[waypoint.length-1],sphereSize),globePoint(line.end.latitude,line.end.longitude,sphereSize),line.type);
+			  addVertex(vertices,colors,vertex(waypoint[waypoint.length-1],sphereSize),globePoint(line.end.latitude,line.end.longitude,sphereSize),line.type);
 			  
 			  
 		  }else{
-			  addVertex(geo,globePoint(line.start.latitude,line.start.longitude,sphereSize),globePoint(line.end.latitude,line.end.longitude,sphereSize),line.type);
+			  addVertex(vertices,colors,globePoint(line.start.latitude,line.start.longitude,sphereSize),globePoint(line.end.latitude,line.end.longitude,sphereSize),line.type);
 		  }
 		  
 
@@ -856,7 +886,12 @@ DAT.Globe = function(container, opts) {
 	    vertexColors: THREE.VertexColors
 	} );
   
-	  
+	
+	var fvertices = new Float32Array(vertices);
+	var fcolors = new Float32Array(colors);
+	geo.addAttribute( 'position', new THREE.BufferAttribute( fvertices, 3 ) );
+	geo.addAttribute( 'color', new THREE.BufferAttribute( fcolors, 3 ) );
+	
 	  var mesh  = new THREE.LineSegments(geo, material);
 		scene.add( mesh);
 		
@@ -868,11 +903,12 @@ DAT.Globe = function(container, opts) {
   function addPoint(city, size, color, subgeo) {
 
 	
-	var sphereSize = radius+0.1*totalSize;
+	var sphereSize = radius-0.1*totalSize;
 	var geometry;
 	
 	if(size == 0){
-		geometry = new THREE.CylinderGeometry( 0.05*totalSize, 0.05*totalSize, 0.2*totalSize,16  );
+		sphereSize = radius+0.1*totalSize
+		geometry = new THREE.CylinderGeometry( 0.05*totalSize, 0.05*totalSize, 0.5*totalSize,16  );
 		
 	    
 	}else{
@@ -903,7 +939,7 @@ DAT.Globe = function(container, opts) {
 	//    scale = Math.sqrt(scale);
 	    point.scale.x = scale;
 	    point.scale.y = scale;
-	    point.scale.z = scale; // avoid non-invertible matrix
+	    point.scale.z = Math.max( scale, 0.8*totalSize ); // avoid non-invertible matrix
 	
 	    
 	
@@ -951,7 +987,7 @@ DAT.Globe = function(container, opts) {
 		if(labelPosition =='top'){
 			text.element.classList.add("label-top")
 		}
-		container.appendChild(text.element);
+	//	container.appendChild(text.element);
   }
   
   function detail(city,filter){
@@ -1010,6 +1046,7 @@ DAT.Globe = function(container, opts) {
       element: div,
       parent: false,
       position: new THREE.Vector3(0,0,0),
+      added:false,
       setHTML: function(html) {
         this.element.innerHTML = html;
       },
@@ -1033,13 +1070,19 @@ DAT.Globe = function(container, opts) {
         	
         	if(distance < Math.pow(a,2) * 80){
 	        	this.element.classList.remove("text-hide");
+	        	if(!this.added) container.appendChild(this.element);
+             	this.added  = true;
         	}else{
         		this.element.classList.add("text-hide");
+        		if(this.added) container.removeChild(this.element); 
+             	this.added  = false;
         		
         	}
         	
 	        if(distance> 400){
         		this.element.classList.add("text-hide");
+        		if(this.added) container.removeChild(this.element); 
+             	this.added  = false;
 	        }
 	        
         }
@@ -1205,14 +1248,15 @@ DAT.Globe = function(container, opts) {
   }
 
   function onWindowResize( event ) {
-    camera.aspect = container.offsetWidth / container.offsetHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize( container.offsetWidth, container.offsetHeight );
+	  camera.aspect = window.innerWidth / window.innerHeight;
+	    camera.updateProjectionMatrix();
+
+	    renderer.setSize( window.innerWidth, window.innerHeight );
   }
 
   function zoom(delta) {
     distanceTarget -= delta;
-    distanceTarget = distanceTarget > 600 ? 600 : distanceTarget;
+    distanceTarget = distanceTarget > 300 ? 300 : distanceTarget;
     distanceTarget = distanceTarget < 220 *totalSize ? 220 *totalSize: distanceTarget;
   }
 
@@ -1243,6 +1287,15 @@ DAT.Globe = function(container, opts) {
     
     renderer.render(scene, camera);
     
+  }
+  
+  function moveCameraTo(lat,long){
+//	  var point = globePoint(lat,long,distance);
+	  target.x = (270 + long) * Math.PI / 180;
+	  target.y = lat/180 * Math.PI  ;
+	  if(distance == undefined){
+		  distanceTarget = distanceTarget > 120 ? 120 : distanceTarget;
+	  }else  distanceTarget = distance;
   }
 
   init();
@@ -1291,6 +1344,7 @@ DAT.Globe = function(container, opts) {
   this.scene = scene;
   this.distanceTo = distanceTo;
   this.detail = detail;
+  this.moveCameraTo = moveCameraTo;
   
   return this;
 

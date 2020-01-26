@@ -155,7 +155,7 @@ body {
 		style="overflow-x: hidden;">
 		
 		<div id="container"></div>
-		  <div id="currentInfo">
+		   <div id="currentInfo">
 		  	<div class="form-check">
 		  		<input type="checkbox" class="form-check-input"  ng-model="showUnuse" ng-click="changeShowUnuse()">
 		  	</div>
@@ -290,7 +290,7 @@ body {
 												<div ng-repeat="destiny in selected.destinies">
 												{{destiny.road.id}} {{destiny.road.destinies[0].city.name}} - {{destiny.road.destinies[1].city.name}} 
 												
-												<select ng-model="destiny.road.type" ng-change="changeRoad(destiny.road)"><option>normal</option><option>water</option><option>high</option></select>
+												<select ng-model="destiny.road.type" ng-change="changeRoad(destiny.road)"><option>normal</option><option>water</option><option>high</option><option>mountain</option><option>desert</option></select>
 												<input ng-model="destiny.road.waypoint" ng-change="changeRoad(destiny.road)"/>
 												<button class="btn btn-primary btn-xs" ng-click="removeRoad(destiny)">Remove</button>
 												<button class="btn btn-primary btn-xs" ng-click="addUnit(destiny)">Add Unit</button>
@@ -392,7 +392,7 @@ body {
 
 											<span  ng-show="stat=='muster'">
 												<button class="btn btn-primary btn-sm mb-2" data-dismiss="modal" title="Muster" ng-click="muster(selected,0,true);" 
-											    	ng-disabled="selected.checkMuster()">
+											    	>
 											    	<span class="glyphicon glyphicon-ok"></span>
 											    </button>
 
@@ -1229,18 +1229,50 @@ body {
 		</div>
 		
 		<div class="modal fade" id="scenario" tabindex="-1" role="dialog">
-			<div class="modal-dialog " role="document">
+			<div class="modal-dialog" >
 				<div class="modal-content">
 					<div class="modal-header">
 						<h5 class="modal-title">
 							Select Scenario
 						</h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close" style="margin-right: 0px;">
+							<span aria-hidden="true">×</span>
+						</button>
 					</div>
 					<div class="modal-body">
-						<div class="list-group">
-						  <a href="#" class="list-group-item" ng-repeat="scenario in scenarios" ng-click="selectScenario(scenario)">{{scenario.name}}</a>
+					
+						<div ng-repeat="scenario in scenarios | filter:{yn:true}| orderBy:'-year'" ng-click="selectScenario(scenario)" data-dismiss="modal">
+						  <a href="#"     >{{scenario.name}}</a>
+						  <hr ng-if="!$last"/>
 						</div>
-						
+					</div>
+
+				</div>
+			</div>
+		</div>
+		
+		<div class="modal fade" id="faction" tabindex="-1" role="dialog">
+			<div class="modal-dialog modal-lg" >
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">
+							Factions
+						</h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close" style="margin-right: 0px;">
+							<span aria-hidden="true">×</span>
+						</button>
+					</div>
+					<div class="modal-body">
+					
+						    	<button ng-repeat="faction in activeFactions"  ng-click="selectDialogFaction(faction);" ng-style="{'color':'white','background-color':faction.color}" class="btn badge">
+						    	  <span class="glyphicon glyphicon-bookmark" style="padding-right:2px;"></span>{{faction.name}}</button>
+						    	
+						  		<hr/>
+						  
+						    	<button ng-repeat="city in activeFactions[selectedFaction].cities"  ng-style="{'color':'white','background-color':activeFactions[selectedFaction].color}" class="btn badge">
+						    		<span class="glyphicon glyphicon-home" style="padding-right:2px;"></span>{{city.name}}</button>
+						    
+						 
 					</div>
 
 				</div>
@@ -1431,6 +1463,8 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	$scope.showUnuse = false;
 	
 	$scope.factions = {0:{name:'None',id:0}};
+	$scope.activeFactions = {};
+	
 	$scope.buildings = {};
 	$scope.weapons = {};
 	$scope.traits = {};
@@ -1571,6 +1605,9 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		var data = [];
 		
 		
+	$scope.selectDialogFaction = function(faction){
+		$scope.selectedFaction=faction.id;
+	}
 	$scope.addRoad = function(selected,city){
 		$http.post("data/road.do",{
 			start:selected.id,
@@ -1790,6 +1827,8 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		    	
 		    	list = response.data;
 		    	data = [];
+		    	$scope.activeFactions = {};
+		    	
 			 	angular.forEach(list,function(city){
 			 		
 			 		var c = new City(city,$scope);
@@ -1806,6 +1845,12 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 			 			$scope.factions[city.faction].cities.push(c);
 			 		}
 //					data = data.concat([city.latitude,city.longitude,city.population,city.faction]);
+					if($scope.activeFactions[city.faction] == undefined){
+				 		$scope.activeFactions[city.faction] = $scope.factions[city.faction];	
+				 		$scope.activeFactions[city.faction].cities = [];
+					}
+					
+					$scope.activeFactions[city.faction].cities.push(c);
 			 	});
 			 	
 		       window.data = data;
@@ -2190,6 +2235,7 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 	    	
 	    	list = response.data;
 	    	data = [];
+	    	$scope.activeFactions = {};
 		 	angular.forEach(list,function(city){
 		 		
 		 		var c = new City(city,$scope);
@@ -2203,9 +2249,17 @@ app.controller('myCtrl', function($scope,$http,$filter,$window,$sce,$interval) {
 		 		snapshotMap[city.snapshot] = c;
 		 		
 		 		if($scope.factions[city.faction] != undefined && city.faction != 0){
-		 			$scope.factions[city.faction].cities.push(c);
+		 		//	$scope.factions[city.faction].cities.push(c);
 		 		}
 //				data = data.concat([city.latitude,city.longitude,city.population,city.faction]);
+
+		 		if($scope.activeFactions[city.faction] == undefined && city.yn && city.faction !=0){
+			 		$scope.activeFactions[city.faction] = $scope.factions[city.faction];	
+			 		//$scope.activeFactions[city.faction].cities = [];
+				}
+		 		if($scope.activeFactions[city.faction] != undefined && city.yn ){
+		 			$scope.activeFactions[city.faction].cities.push(c);
+		 		}
 		 	});
 		 	
 	       window.data = data;

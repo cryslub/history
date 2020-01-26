@@ -209,14 +209,14 @@ public interface MainMapper {
 	@Update("update city set yn = 0 where id = #{id}")	
 	public void unuse(int id);
 
-	@Select("select id,name,color from faction")
+	@Select("select id,name,color,region,area from faction")
 	public List<Faction> getFaction();
 
 	@Insert("insert into faction (name,color) values (#{name},#{color})")
 	public void addFaction(Faction faction);
 
 	
-	@Update("update faction set name=#{name}, color=#{color} where id=#{id}")
+	@Update("update faction set name=#{name}, color=#{color}, region=#{region},area=#{area} where id=#{id}")
 	public void editFaction(Faction faction);
 	
 	@Select("select c.id, c.name,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color, s.soldiers, s.id as snapshot "
@@ -235,8 +235,8 @@ public interface MainMapper {
 	public List<Sub> getSnapshotSubs();
 
 	
-	@Select("select c.type,c.id, ifnull(s.name,c.name) as name ,c.name as cityName ,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color, s.soldiers, s.id as snapshot, sc.yn, "
-			+ "#{scenario} as scenario, m.year, sc.id as scenarioCity, "
+	
+	@Select("select c.type,c.id, ifnull(s.name,c.name) as name ,c.name as cityName ,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color, s.soldiers, s.id as snapshot, sc.yn, #{scenario} as scenario, m.year, "
 			+ " c.labelPosition "
 			+ "  from city c"
 			+ " inner join  snapshot s on c.id = s.city "
@@ -246,9 +246,34 @@ public interface MainMapper {
 			+ " left outer join faction f on f.id = s.faction "
 			+ " where  s.population > 0 or c.type='waypoint' " 
 			+ " ")
-	public List<Snapshot> getAllScenarioSnapshot(@Param("scenario") int scenario);
+	public List<Snapshot> getAllScenarioSnapshotOld(@Param("scenario") int scenario);
 
 	
+	@Select("SELECT  c.type,c.id, ifnull(s.name,c.name) as name ,c.name as cityName ,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color,  s.id as snapshot, "
+			+ " #{scenario} as scenario, s.year, scc.id as scenarioCity, "
+			+ " c.labelPosition, scc.yn from city c  "
+			+ " LEFT OUTER JOIN scenarioCity scc  ON c.id = scc.city AND scc.scenario = #{scenario}"
+			+ " INNER JOIN  "
+			+ " ( select max(s.year) as year, s.city from snapshot s, scenario sc  where sc.year >= s.year AND sc.id = #{scenario} group by s.city ) m ON c.id = m.city"
+			+ " INNER JOIN snapshot s ON s.year = m.year AND s.city = m.city"
+			+ " LEFT OUTER JOIN faction f ON f.id = s.faction "
+			+ " WHERE ( s.population > 0 or c.type='waypoint')")
+	public List<Snapshot> getAllScenarioSnapshot(@Param("scenario") int scenario);
+	
+	
+	@Select("SELECT  c.type,c.id, ifnull(s.name,c.name) as name ,c.name as cityName ,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color,  s.id as snapshot, "
+			+ " #{scenario} as scenario, s.year, scc.id as scenarioCity, "
+			+ " c.labelPosition, scc.yn from scenarioCity scc "
+			+ " INNER JOIN city c ON c.id = scc.city "
+			+ " INNER JOIN  "
+			+ " ( select max(s.year) as year, s.city from snapshot s, scenario sc  where sc.year >= s.year AND sc.id = #{scenario} group by s.city ) m ON scc.city = m.city"
+			+ " INNER JOIN snapshot s ON s.year = m.year AND s.city = m.city"
+			+ " LEFT OUTER JOIN faction f ON f.id = s.faction "
+			+ " WHERE scc.scenario = #{scenario}"
+			+ " AND( s.population > 0 or c.type='waypoint')"
+			+ " AND scc.yn = 1 ")
+	public List<Snapshot> getScenarioCities(@Param("scenario") int scenario);
+
 	
 	@Select("select * from building")
 	public List<Building> getBuildings();
@@ -364,7 +389,7 @@ public interface MainMapper {
 	public void addScenarioRoads(Scenario scenario);
 
 	
-	@Update("update scenario set name=#{name}, description=#{description}, yn=#{yn} where id = #{id}")
+	@Update("update scenario set name=#{name},age=#{age}, description=#{description}, yn=#{yn} where id = #{id}")
 	public void editScenario(Scenario scenario);
 
 	

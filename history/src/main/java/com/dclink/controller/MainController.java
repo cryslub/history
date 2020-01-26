@@ -25,6 +25,12 @@ public class MainController {
 	public String light() {
         return "light";
     }
+
+	@RequestMapping("/mobile.do")
+	public String mobile() {
+        return "mobile";
+    }
+
 	
 	@RequestMapping("/admin.do")
 	public String admin() {

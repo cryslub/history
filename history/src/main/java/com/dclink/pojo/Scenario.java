@@ -9,6 +9,8 @@ public class Scenario {
 	int scenario;
 	String description;
 	boolean yn;
+	String age;
+	
 	
 	public int getId() {
 		return id;
@@ -54,6 +56,12 @@ public class Scenario {
 	}
 	public void setYn(boolean yn) {
 		this.yn = yn;
+	}
+	public String getAge() {
+		return age;
+	}
+	public void setAge(String age) {
+		this.age = age;
 	}
 	
 	

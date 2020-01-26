@@ -421,6 +421,15 @@ public class DataController {
     }
 
 	
+	@RequestMapping(value="/scenarioCities.do",method=RequestMethod.GET)
+	public @ResponseBody List<Snapshot> getScenarioCities(@RequestParam("scenario") int scenario) {
+		List<Snapshot> ret = mainMapper.getScenarioCities(scenario);
+		
+        return ret;
+    }
+
+	
+	
 	@RequestMapping(value="/road.do",method=RequestMethod.GET)
 	public @ResponseBody List<Road> getRoad(@RequestParam("scenario") int scenario) {
 		List<Road> ret = mainMapper.getRoads(scenario);
