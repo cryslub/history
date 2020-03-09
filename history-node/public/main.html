@@ -1,0 +1,144 @@
+
+		    <div id="currentInfo">
+		  	
+			<button data-toggle="modal" class="btn btn-outline-light btn-sm" data-target="#scenario">Scenario</button>
+			<button data-toggle="modal" class="btn btn-outline-light btn-sm" data-target="#faction">Faction</button>
+
+		  </div>
+
+
+		
+		<div class="modal fade" id="scenario" tabindex="-1" role="dialog">
+			<div class="modal-dialog" >
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">
+							Select Scenario
+						</h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close" style="margin-right: 0px;">
+							<span aria-hidden="true">×</span>
+						</button>
+					</div>
+					<div class="modal-body">
+					
+						<ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+						  <li class="nav-item">
+						    <a class="nav-link active" data-toggle="pill" href="#pills-ancient" role="tab" >Ancient</a>
+						  </li>
+						  <li class="nav-item">
+						    <a class="nav-link" data-toggle="pill" href="#pills-classical" role="tab">Classical</a>
+						  </li>
+						  <li class="nav-item">
+						    <a class="nav-link" data-toggle="pill" href="#pills-medieval" role="tab">Medieval</a>
+						  </li>
+						  <li class="nav-item">
+						    <a class="nav-link" data-toggle="pill" href="#pills-renaissance" role="tab">Renaissance</a>
+						  </li>
+						</ul>
+						
+						<div class="tab-content" id="pills-tabContent">
+						  <div class="tab-pane fade show active" id="pills-ancient" role="tabpanel">
+						  	<div ng-repeat="scenario in main.era.ancient | orderBy:'-year'" ng-click="main.selectScenario(scenario)" data-dismiss="modal">
+							  <a href="#"     >{{scenario.name}}</a>
+							  <hr ng-if="!$last"/>
+							</div>
+						  </div>
+						  <div class="tab-pane fade" id="pills-classical" role="tabpanel">
+						  	<div ng-repeat="scenario in main.era.classical| orderBy:'-year'" ng-click="main.selectScenario(scenario)" data-dismiss="modal">
+							  <a href="#"     >{{scenario.name}}</a>
+							  <hr ng-if="!$last"/>
+							</div>
+
+						  </div>
+						  <div class="tab-pane fade" id="pills-medieval" role="tabpanel">
+						  	<div ng-repeat="scenario in main.era.medieval | orderBy:'-year'" ng-click="main.selectScenario(scenario)" data-dismiss="modal">
+							  <a href="#"     >{{scenario.name}}</a>
+							  <hr ng-if="!$last"/>
+							</div>
+
+						  </div>
+						  <div class="tab-pane fade" id="pills-renaissance" role="tabpanel">
+						  	<div ng-repeat="scenario in main.era.renaissance| orderBy:'-year'" ng-click="main.selectScenario(scenario)" data-dismiss="modal">
+							  <a href="#"     >{{scenario.name}}</a>
+							  <hr ng-if="!$last"/>
+							</div>
+
+						  </div>
+
+						</div>
+						
+						
+					</div>
+
+				</div>
+			</div>
+		</div>
+		
+		<div class="modal fade" id="faction" tabindex="-1" role="dialog">
+			<div class="modal-dialog modal-lg" >
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">
+							Factions
+						</h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close" style="margin-right: 0px;">
+							<span aria-hidden="true">×</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+						  <li class="nav-item" ng-repeat="(name,region) in main.region">
+						    <a class="nav-link "   data-toggle="pill" href="#region{{$index}}" role="tab" ng-click="main.selectedFaction=0;" >{{name}}</a>
+						  </li>
+						</ul>
+					
+						<div class="tab-content" id="pills-tabContent">
+						
+						
+						  <div class="tab-pane fade show"  ng-class="$first?'active':''" id="region{{$index}}" role="tabpanel" ng-repeat="(name,region) in main.region">
+						  							
+							<div  ng-repeat="(regionName,area) in region">
+								<small><b>{{regionName}}</b></small><br/>
+						  
+						  
+								<button ng-repeat="faction in area"  ng-click="main.selectDialogFaction(faction);" ng-style="{'color':'white','background-color':faction.color}" class="btn badge">
+						    		  <span class="glyphicon glyphicon-bookmark" style="padding-right:2px;"></span>{{faction.name}}</button>
+						    	
+						  	</div>
+						  </div>
+
+						</div>
+					
+
+						    	
+						  		<hr/>
+						  		<div ng-show="main.selectedFaction>0">
+						  		Cities<br/>
+						    	<button ng-repeat="city in main.activeFactions[main.selectedFaction].cities" ng-click="main.moveCameraTo(city);"   data-dismiss="modal"  ng-style="{'color':'white','background-color':main.activeFactions[main.selectedFaction].color}" class="btn badge">
+						    		<span class="glyphicon glyphicon-home" style="padding-right:2px;"></span>{{city.name}}</button>
+						    	</div>
+						 
+					</div>
+
+				</div>
+			</div>
+		</div>
+		
+		
+		<div class="modal fade" id="loading" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+			<div class="modal-dialog modal-lg" >
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">
+							Loading...
+						</h5>
+						
+					</div>
+					<div class="modal-body">
+					    This app loads 6MB of Geo-data at the beginning.
+						Depending on your network connection, this can take few minutes.
+					</div>
+				</div>
+			</div>
+		</div>
+		

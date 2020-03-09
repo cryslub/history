@@ -4,8 +4,12 @@ class Main{
 	constructor($http,$filter,option){
 		
 	
+
+		
 	var self = this;
 
+
+	
 	self. $http = $http;
 	self. $filter = $filter;
 	
@@ -58,7 +62,7 @@ class Main{
 		
 	 
 	 
-		
+
 		self.getFaction(function(){
 			self.getScenario();
 		});
@@ -109,6 +113,9 @@ class Main{
 	 getScenario(){
 		  var self = this;
 		  
+
+			self.startLoading();
+			
 			this.$http.get("data/scenario.do")
 		    .then(function(response) {
 		    	
@@ -199,7 +206,13 @@ class Main{
 				
 				self.roads = self.globe.addLines(self.lineCoord);
 
-		    	
+				var interval = setInterval(function(){ 
+					if(self.globe.loaded){
+						self.closeLoading();					
+						 clearInterval(interval);
+					}
+				}, 1000);
+				
 		    });		
 		}
 
@@ -241,6 +254,11 @@ class Main{
 			self.cityMap = {};
 			self.snapshotMap = {};
 			self.cities = {};
+			self.selectedFaction = 0;
+			
+			
+			
+			self.startLoading();
 			
 			self.$http.get("data/scenarioCities.do?scenario="+scenario.id)
 		    .then(function(response) {
@@ -297,9 +315,12 @@ class Main{
 		       self.citiesArray = Object.values(self.cities);
 
 			  	
+		       
 			  	
 			  	
-
+		       	setTimeout(function(){
+		       		$('#faction li:first-child a').tab('show');
+		       	},100);
 			  	
 			  	 
 		    });
@@ -357,5 +378,12 @@ class Main{
 	 init(){
 		 
 	 }
-	
+	 
+	 startLoading(){
+		 $('#loading').modal();
+	 }
+	 
+	 closeLoading(){
+		 $('#loading').modal('hide');
+	 }
 }

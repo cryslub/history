@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="data">  
+  <select id="getScenario">
+    select * from scenario
+  </select>
+  
+  <select id="getFaction">
+    select id,name,color,region,area from faction
+  </select>
+
+  <select id="getScenarioCities">
+	  SELECT  c.type,c.id, ifnull(s.name,c.name) as name ,c.name as cityName ,c.originalName, c.longitude, c.latitude, s.population, s.faction, f.color,  s.id as snapshot,
+			#{scenario} as scenario, s.year, scc.id as scenarioCity,
+			c.labelPosition, scc.yn from scenarioCity scc
+			INNER JOIN city c ON c.id = scc.city
+			INNER JOIN 
+			( select max(s.year) as year, s.city from snapshot s, scenario sc  where sc.year >= s.year AND sc.id = #{scenario} group by s.city ) m ON scc.city = m.city
+			INNER JOIN snapshot s ON s.year = m.year AND s.city = m.city
+			LEFT OUTER JOIN faction f ON f.id = s.faction
+			WHERE scc.scenario = #{scenario}
+			AND( s.population > 0 or c.type='waypoint')
+			AND scc.yn = 1  	
+	 </select>
+  
+  
+	 <select id="getRoads">
+	    select s.id,r.id as road, r.start,r.end,r.waypoint,r.type from road r, scenarioRoad s 
+			where r.id = s.road and s.scenario = #{scenario} 
+	  </select>
+	  
+	   <select id="getRoadSubs">
+	    select * from roadSub
+	  </select>
+</mapper>

@@ -409,6 +409,8 @@ DAT.Globe = function(container, opts) {
 	    	var m = new THREE.Mesh( geo, materials );
 	      	
 			scene.add(  m);
+			
+			self.loaded = true;
       });
     
    
@@ -1330,6 +1332,8 @@ DAT.Globe = function(container, opts) {
     this._time = t;
   });
 
+  var self = this;
+  
   this.addData = addData;
   this.addForce = addForce;
   this.addUnit = addUnit;
@@ -1345,6 +1349,8 @@ DAT.Globe = function(container, opts) {
   this.distanceTo = distanceTo;
   this.detail = detail;
   this.moveCameraTo = moveCameraTo;
+  
+  this.loaded = false;
   
   return this;
 

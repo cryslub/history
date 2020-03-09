@@ -88,7 +88,7 @@
 					<div class="modal-body">
 						<ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
 						  <li class="nav-item" ng-repeat="(name,region) in main.region">
-						    <a class="nav-link "  ng-class="$first?'active':''" data-toggle="pill" href="#region{{$index}}" role="tab" >{{name}}</a>
+						    <a class="nav-link "   data-toggle="pill" href="#region{{$index}}" role="tab" ng-click="main.selectedFaction=0;" >{{name}}</a>
 						  </li>
 						</ul>
 					
@@ -112,13 +112,32 @@
 
 						    	
 						  		<hr/>
-						  
+						  		<div ng-show="main.selectedFaction>0">
+						  		Cities<br/>
 						    	<button ng-repeat="city in main.activeFactions[main.selectedFaction].cities" ng-click="main.moveCameraTo(city);"   data-dismiss="modal"  ng-style="{'color':'white','background-color':main.activeFactions[main.selectedFaction].color}" class="btn badge">
 						    		<span class="glyphicon glyphicon-home" style="padding-right:2px;"></span>{{city.name}}</button>
-						    
+						    	</div>
 						 
 					</div>
 
 				</div>
 			</div>
 		</div>
+		
+		
+		<div class="modal fade" id="loading" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+			<div class="modal-dialog modal-lg" >
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">
+							Loading...
+						</h5>
+						
+					</div>
+					<div class="modal-body">
+						Depending on your network connection, this can take few minutes.
+					</div>
+				</div>
+			</div>
+		</div>
+		
