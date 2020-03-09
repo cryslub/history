@@ -1,6 +1,6 @@
 # Historical Cities Simulator 
 
-Simulates city positions and factions and road connections of significant moments in history.
+Simulates city positions, factions and road connections of significant moments in history.
 A foundation project for making a historical strategy game.
 
 
